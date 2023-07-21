@@ -75,7 +75,7 @@ class LatControlTorque(LatControl):
     self.torque_params.latAccelOffset = latAccelOffset
     self.torque_params.friction = friction
 
-  def update(self, active, CS, VM, params, last_actuators, steer_limited, desired_curvature, desired_curvature_rate, llk, lateral_plan=None, model_data=None):
+  def update(self, active, CS, VM, params, last_actuators, steer_limited, desired_curvature, desired_curvature_rate, llk, lat_plan=None, model_data=None):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
 
     if not active:
@@ -118,9 +118,9 @@ class LatControlTorque(LatControl):
         desired_lateral_jerk = desired_curvature_rate * CS.vEgo ** 2
         
         # prepare future roll, lat accel, and lat accel error
-        if None not in [lateral_plan, model_data] and all([len(i) >= CONTROL_N for i in [model_data.orientation.x, lateral_plan.curvatures]]):
+        if None not in [lat_plan, model_data] and all([len(i) >= CONTROL_N for i in [model_data.orientation.x, lat_plan.curvatures]]):
           adjusted_future_times = [t + 0.5*CS.aEgo*(t/max(CS.vEgo, 1.0)) for t in self.nnff_future_times]
-          future_planned_lateral_accels = [interp(t, T_IDXS[:CONTROL_N], lateral_plan.curvatures) * CS.vEgo ** 2 for t in adjusted_future_times]
+          future_planned_lateral_accels = [interp(t, T_IDXS[:CONTROL_N], lat_plan.curvatures) * CS.vEgo ** 2 for t in adjusted_future_times]
           future_actual_lateral_accels = [interp(t, T_IDXS, model_data.acceleration.y) * CS.vEgo ** 2 for t in adjusted_future_times]
           future_rolls = [interp(t, T_IDXS, model_data.orientation.x) + roll for t in adjusted_future_times]
         else:
