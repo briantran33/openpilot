@@ -121,7 +121,7 @@ class LatControlTorque(LatControl):
         if None not in [lat_plan, model_data] and all([len(i) >= CONTROL_N for i in [model_data.orientation.x, lat_plan.curvatures]]):
           adjusted_future_times = [t + 0.5*CS.aEgo*(t/max(CS.vEgo, 1.0)) for t in self.nnff_future_times]
           future_planned_lateral_accels = [interp(t, T_IDXS[:CONTROL_N], lat_plan.curvatures) * CS.vEgo ** 2 for t in adjusted_future_times]
-          future_actual_lateral_accels = [interp(t, T_IDXS, model_data.acceleration.y) * CS.vEgo ** 2 for t in adjusted_future_times]
+          future_actual_lateral_accels = [interp(t, T_IDXS, model_data.acceleration.y) for t in adjusted_future_times]
           future_rolls = [interp(t, T_IDXS, model_data.orientation.x) + roll for t in adjusted_future_times]
         else:
           future_planned_lateral_accels = [desired_lateral_accel] * (len(self.nnff_future_times) + 1)
