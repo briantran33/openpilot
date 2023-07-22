@@ -41,12 +41,12 @@ class LatControlTorque(LatControl):
     if self.use_nn:
       cloudlog.warning("Using NNFF model for lateral torque control")
       self.torque_from_nn = CI.get_ff_nn
-      self.error_downscale = 2.0 # downscale error in curves by up to the reciprocal of this factor
-      self.error_downscale_deadzone = 0.3 # full error response on mostly straight roads
+      # self.error_downscale = 2.0 # downscale error in curves by up to the reciprocal of this factor
+      # self.error_downscale_deadzone = 0.3 # full error response on mostly straight roads
       # error downscaling uses planned lat accel to preemptively downscale error by 1.5s,
       # and is filtered so that downscaling continues for a short time after (~1.5s)
       # the curve ends.
-      self.error_scale_factor = FirstOrderFilter(0.0, 0.5, 0.01) 
+      # self.error_scale_factor = FirstOrderFilter(0.0, 0.5, 0.01) 
       # NNFF model takes current v_ego, lateral_accel, lat accel/jerk error, roll, and past/future/planned data
       # of lat accel and roll
       # Past value is computed using previous desired lat accel and observed roll
@@ -137,17 +137,6 @@ class LatControlTorque(LatControl):
           laf_ratio_stock_to_live = 1.0
           
         # compute NNFF error response
-        # lat accel model input is downscaled based on lateral acceleration,
-        # which happens preemptively based on future lateral accel as well.
-        # This allows for full error correction on straights while letting
-        # feedforward handle curves.
-        max_future_abs_lateral_accel = apply_deadzone(max(abs(i) for i in future_planned_lateral_accels), self.error_downscale_deadzone)
-        error_scale_factor = 1.0 / clip(self.error_downscale * max_future_abs_lateral_accel + 1.0, 0.0, self.error_downscale)
-        if error_scale_factor < self.error_scale_factor.x:
-          self.error_scale_factor.x = error_scale_factor
-        else:
-          self.error_scale_factor.update(error_scale_factor)
-          
         nnff_setpoint_input = [CS.vEgo, desired_lateral_accel, desired_lateral_jerk, roll] \
                               + past_lateral_accels_desired + future_planned_lateral_accels \
                               + past_rolls + future_rolls
@@ -156,21 +145,16 @@ class LatControlTorque(LatControl):
                               + past_rolls + future_rolls
         torque_from_setpoint = self.torque_from_nn(nnff_setpoint_input)
         torque_from_measurement = self.torque_from_nn(nnff_measurement_input)
-        error = torque_from_setpoint - torque_from_measurement
-        error *= self.error_scale_factor.x
-        pid_log.error = error
+        pid_log.error = torque_from_setpoint - torque_from_measurement
         
-        # compute NNFF feedforward
-        nnff_input = [CS.vEgo, desired_lateral_accel, desired_lateral_jerk, roll] \
-                    + past_lateral_accels_desired + future_planned_lateral_accels \
-                    + past_rolls + future_rolls
-        ff = self.torque_from_nn(nnff_input)
+        # compute feedforward (same as nnff setpoint output)
+        ff = torque_from_setpoint
         
-        nnff_log = nnff_input + nnff_setpoint_input + nnff_measurement_input + \
-                    [max_future_abs_lateral_accel, 
-                     self.error_scale_factor.x, 
+        nnff_log = nnff_setpoint_input + nnff_measurement_input + \
+                    [
                      friction_ratio_live_to_stock, 
-                     laf_ratio_stock_to_live]
+                     laf_ratio_stock_to_live
+                     ]
       else:
         gravity_adjusted_lateral_accel = desired_lateral_accel - params.roll * ACCELERATION_DUE_TO_GRAVITY
         torque_from_setpoint = self.torque_from_lateral_accel(setpoint, self.torque_params, setpoint,
