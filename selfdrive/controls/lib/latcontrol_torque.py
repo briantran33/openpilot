@@ -111,7 +111,7 @@ class LatControlTorque(LatControl):
         self.roll_deque.append(roll)
         past_rolls = [self.roll_deque[min(len(self.roll_deque)-1, i)] for i in self.history_frame_offsets]
         self.lateral_accel_actual_deque.append(actual_lateral_accel)
-        past_last_accels_actual = [self.lateral_accel_actual_deque[min(len(self.lateral_accel_actual_deque)-1, i)] for i in self.history_frame_offsets]
+        past_lateral_accels_actual = [self.lateral_accel_actual_deque[min(len(self.lateral_accel_actual_deque)-1, i)] for i in self.history_frame_offsets]
         self.lateral_accel_desired_deque.append(desired_lateral_accel)
         past_lateral_accels_desired = [self.lateral_accel_desired_deque[min(len(self.lateral_accel_desired_deque)-1, i)] for i in self.history_frame_offsets]
         error = desired_lateral_accel - actual_lateral_accel
@@ -152,7 +152,7 @@ class LatControlTorque(LatControl):
                               + past_lateral_accels_desired + future_planned_lateral_accels \
                               + past_rolls + future_rolls
         nnff_measurement_input = [CS.vEgo, actual_lateral_accel, actual_lateral_jerk if self.use_steering_angle else 0.0, roll] \
-                              + past_last_accels_actual + future_actual_lateral_accels \
+                              + past_lateral_accels_actual + future_actual_lateral_accels \
                               + past_rolls + future_rolls
         torque_from_setpoint = self.torque_from_nn(nnff_setpoint_input)
         torque_from_measurement = self.torque_from_nn(nnff_measurement_input)
