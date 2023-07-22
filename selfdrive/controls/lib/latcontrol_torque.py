@@ -39,17 +39,11 @@ class LatControlTorque(LatControl):
     # neural network feedforward
     self.use_nn = CI.has_lateral_torque_nnff
     if self.use_nn:
-      cloudlog.warning("Using NNFF model for lateral torque control")
-      self.torque_from_nn = CI.get_ff_nn
-      # self.error_downscale = 2.0 # downscale error in curves by up to the reciprocal of this factor
-      # self.error_downscale_deadzone = 0.3 # full error response on mostly straight roads
-      # error downscaling uses planned lat accel to preemptively downscale error by 1.5s,
-      # and is filtered so that downscaling continues for a short time after (~1.5s)
-      # the curve ends.
-      # self.error_scale_factor = FirstOrderFilter(0.0, 0.5, 0.01) 
       # NNFF model takes current v_ego, lateral_accel, lat accel/jerk error, roll, and past/future/planned data
       # of lat accel and roll
       # Past value is computed using previous desired lat accel and observed roll
+      cloudlog.warning("Using NNFF model for lateral torque control")
+      self.torque_from_nn = CI.get_ff_nn
       
       # setup future time offsets
       self.nnff_time_offset = CP.steerActuatorDelay + 0.2
@@ -62,12 +56,6 @@ class LatControlTorque(LatControl):
       self.lateral_accel_desired_deque = deque(maxlen=history_check_frames[0])
       self.lateral_accel_actual_deque = deque(maxlen=history_check_frames[0])
       self.roll_deque = deque(maxlen=history_check_frames[0])
-
-      # for scaling NNFF based on relative lat accel factor,
-      # and NNFF error response based on relative friction factor
-      self.live_NNFF_scaling = False # set to True to enable
-      self.initial_lateral_accel_factor = copy.copy(self.torque_params.latAccelFactor)
-      self.initial_friction_coef = max(0.001, copy.copy(self.torque_params.friction))
 
 
   def update_live_torque_params(self, latAccelFactor, latAccelOffset, friction):
@@ -114,7 +102,6 @@ class LatControlTorque(LatControl):
         past_lateral_accels_actual = [self.lateral_accel_actual_deque[min(len(self.lateral_accel_actual_deque)-1, i)] for i in self.history_frame_offsets]
         self.lateral_accel_desired_deque.append(desired_lateral_accel)
         past_lateral_accels_desired = [self.lateral_accel_desired_deque[min(len(self.lateral_accel_desired_deque)-1, i)] for i in self.history_frame_offsets]
-        error = desired_lateral_accel - actual_lateral_accel
         desired_lateral_jerk = desired_curvature_rate * CS.vEgo ** 2
         
         # prepare future roll, lat accel, and lat accel error
@@ -127,14 +114,6 @@ class LatControlTorque(LatControl):
           future_planned_lateral_accels = [desired_lateral_accel] * (len(self.nnff_future_times) + 1)
           future_actual_lateral_accels = [actual_lateral_accel] * (len(self.nnff_future_times) + 1)
           future_rolls = [roll] * len(self.nnff_future_times)
-
-        # compute friction factor and laf_ratio_stock_to_live
-        if self.live_NNFF_scaling:
-          friction_ratio_live_to_stock = self.torque_params.friction / self.initial_friction_coef
-          laf_ratio_stock_to_live = self.initial_lateral_accel_factor / max(0.5, self.torque_params.latAccelFactor)
-        else:
-          friction_ratio_live_to_stock = 1.0
-          laf_ratio_stock_to_live = 1.0
           
         # compute NNFF error response
         nnff_setpoint_input = [CS.vEgo, desired_lateral_accel, desired_lateral_jerk, roll] \
@@ -150,11 +129,7 @@ class LatControlTorque(LatControl):
         # compute feedforward (same as nnff setpoint output)
         ff = torque_from_setpoint
         
-        nnff_log = nnff_setpoint_input + nnff_measurement_input + \
-                    [
-                     friction_ratio_live_to_stock, 
-                     laf_ratio_stock_to_live
-                     ]
+        nnff_log = nnff_setpoint_input + nnff_measurement_input
       else:
         gravity_adjusted_lateral_accel = desired_lateral_accel - params.roll * ACCELERATION_DUE_TO_GRAVITY
         torque_from_setpoint = self.torque_from_lateral_accel(setpoint, self.torque_params, setpoint,
