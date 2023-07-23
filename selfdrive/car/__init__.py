@@ -1,5 +1,4 @@
 # functions common among cars
-import math
 from collections import namedtuple
 from typing import Dict, Optional
 
@@ -34,12 +33,6 @@ def create_button_event(cur_but: int, prev_but: int, buttons_dict: Dict[int, cap
     be = car.CarState.ButtonEvent(pressed=False)
     but = prev_but
   be.type = buttons_dict.get(but, ButtonType.unknown)
-  return be
-
-
-def create_mads_event(mads_event_lock: bool) -> capnp.lib.capnp._DynamicStructBuilder:
-  be = car.CarState.ButtonEvent(pressed=mads_event_lock)
-  be.type = ButtonType.altButton1
   return be
 
 
@@ -192,7 +185,7 @@ class CanBusBase:
   def __init__(self, CP, fingerprint: Optional[Dict[int, Dict[int, int]]]) -> None:
     if CP is None:
       assert fingerprint is not None
-      num = math.ceil(max([k for k, v in fingerprint.items() if len(v)], default=1) / 4)
+      num = max([k for k, v in fingerprint.items() if len(v)], default=0) // 4 + 1
     else:
       num = len(CP.safetyConfigs)
     self.offset = 4 * (num - 1)

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
+import os
 import math
 import json
 import numpy as np
 
 import cereal.messaging as messaging
 from cereal import car
+from cereal import log
 from common.params import Params, put_nonblocking
 from common.realtime import config_realtime_process, DT_MDL
 from common.numpy_fast import clip
-from selfdrive.car.chrysler.values import ChryslerFlagsSP
 from selfdrive.locationd.models.car_kf import CarKalman, ObservationKind, States
 from selfdrive.locationd.models.constants import GENERATED_DIR
 from system.swaglog import cloudlog
@@ -117,6 +118,9 @@ def check_valid_with_hysteresis(current_valid: bool, val: float, threshold: floa
 def main(sm=None, pm=None):
   config_realtime_process([0, 1, 2, 3], 5)
 
+  DEBUG = bool(int(os.getenv("DEBUG", "0")))
+  REPLAY = bool(int(os.getenv("REPLAY", "0")))
+
   if sm is None:
     sm = messaging.SubMaster(['liveLocationKalman', 'carState'], poll=['liveLocationKalman'])
   if pm is None:
@@ -125,7 +129,8 @@ def main(sm=None, pm=None):
   params_reader = Params()
   # wait for stats about the car to come in from controls
   cloudlog.info("paramsd is waiting for CarParams")
-  CP = car.CarParams.from_bytes(params_reader.get("CarParams", block=True))
+  with car.CarParams.from_bytes(params_reader.get("CarParams", block=True)) as msg:
+    CP = msg
   cloudlog.info("paramsd got CarParams")
 
   min_sr, max_sr = 0.5 * CP.steerRatio, 2.0 * CP.steerRatio
@@ -160,10 +165,16 @@ def main(sm=None, pm=None):
     }
     cloudlog.info("Parameter learner resetting to default values")
 
-  # When driving in wet conditions the stiffness can go down, and then be too low on the next drive
-  # Without a way to detect this we have to reset the stiffness every drive
-  params['stiffnessFactor'] = 1.0
-  learner = ParamsLearner(CP, params['steerRatio'], params['stiffnessFactor'], math.radians(params['angleOffsetAverageDeg']))
+  if not REPLAY:
+    # When driving in wet conditions the stiffness can go down, and then be too low on the next drive
+    # Without a way to detect this we have to reset the stiffness every drive
+    params['stiffnessFactor'] = 1.0
+
+  pInitial = None
+  if DEBUG:
+    pInitial = np.array(params['filterState']['std']) if 'filterState' in params else None
+
+  learner = ParamsLearner(CP, params['steerRatio'], params['stiffnessFactor'], math.radians(params['angleOffsetAverageDeg']), pInitial)
   angle_offset_average = params['angleOffsetAverageDeg']
   angle_offset = angle_offset_average
   roll = 0.0
@@ -215,12 +226,15 @@ def main(sm=None, pm=None):
         0.2 <= liveParameters.stiffnessFactor <= 5.0,
         min_sr <= liveParameters.steerRatio <= max_sr,
       ))
-      if CP.carName == "chrysler" and CP.spFlags & ChryslerFlagsSP.SP_RAM_HD_PARAMSD_IGNORE:
-        liveParameters.valid = True
       liveParameters.steerRatioStd = float(P[States.STEER_RATIO])
       liveParameters.stiffnessFactorStd = float(P[States.STIFFNESS])
       liveParameters.angleOffsetAverageStd = float(P[States.ANGLE_OFFSET])
       liveParameters.angleOffsetFastStd = float(P[States.ANGLE_OFFSET_FAST])
+      if DEBUG:
+        liveParameters.filterState = log.LiveLocationKalman.Measurement.new_message()
+        liveParameters.filterState.value = x.tolist()
+        liveParameters.filterState.std = P.tolist()
+        liveParameters.filterState.valid = True
 
       msg.valid = sm.all_checks()
 

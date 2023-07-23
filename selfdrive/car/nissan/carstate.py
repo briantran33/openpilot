@@ -23,8 +23,6 @@ class CarState(CarStateBase):
   def update(self, cp, cp_adas, cp_cam):
     ret = car.CarState.new_message()
 
-    self.prev_mads_enabled = self.mads_enabled
-
     if self.CP.carFingerprint in (CAR.ROGUE, CAR.XTRAIL, CAR.ALTIMA):
       ret.gas = cp.vl["GAS_PEDAL"]["GAS_PEDAL"]
     elif self.CP.carFingerprint in (CAR.LEAF, CAR.LEAF_IC):
@@ -90,8 +88,8 @@ class CarState(CarStateBase):
 
     ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]["STEER_ANGLE"]
 
-    ret.leftBlinker = ret.leftBlinkerOn = bool(cp.vl["LIGHTS"]["LEFT_BLINKER"])
-    ret.rightBlinker = ret.rightBlinkerOn = bool(cp.vl["LIGHTS"]["RIGHT_BLINKER"])
+    ret.leftBlinker = bool(cp.vl["LIGHTS"]["LEFT_BLINKER"])
+    ret.rightBlinker = bool(cp.vl["LIGHTS"]["RIGHT_BLINKER"])
 
     ret.doorOpen = any([cp.vl["DOORS_LIGHTS"]["DOOR_OPEN_RR"],
                         cp.vl["DOORS_LIGHTS"]["DOOR_OPEN_RL"],

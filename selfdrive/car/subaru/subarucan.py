@@ -1,4 +1,5 @@
 from cereal import car
+from selfdrive.car.subaru.values import CanBus
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -45,7 +46,7 @@ def create_es_distance(packer, es_distance_msg, bus, pcm_cancel_cmd):
   return packer.make_can_msg("ES_Distance", bus, values)
 
 
-def create_es_lkas_state(packer, es_lkas_state_msg, lat_active, mads_enabled, visual_alert, left_line, right_line, left_lane_depart, right_lane_depart):
+def create_es_lkas_state(packer, es_lkas_state_msg, enabled, visual_alert, left_line, right_line, left_lane_depart, right_lane_depart):
   values = {s: es_lkas_state_msg[s] for s in [
     "CHECKSUM",
     "COUNTER",
@@ -97,15 +98,12 @@ def create_es_lkas_state(packer, es_lkas_state_msg, lat_active, mads_enabled, vi
       values["LKAS_Alert"] = 11  # Right lane departure dash alert
 
   values["LKAS_ACTIVE"] = 1  # Show LKAS lane lines
-  values["LKAS_Dash_State"] = 2 if lat_active else 1 if mads_enabled and not lat_active else 0  # 2 = Green enabled indicator, 1 = White ready indicator, 0 = LKAS Not enabled
-
-  values["LKAS_Left_Line_Enable"] = 1 if lat_active else 0
-  values["LKAS_Right_Line_Enable"] = 1 if lat_active else 0
+  values["LKAS_Dash_State"] = 2 if enabled else 0  # Green enabled indicator
 
   values["LKAS_Left_Line_Visible"] = int(left_line)
   values["LKAS_Right_Line_Visible"] = int(right_line)
 
-  return packer.make_can_msg("ES_LKAS_State", 0, values)
+  return packer.make_can_msg("ES_LKAS_State", CanBus.main, values)
 
 
 def create_es_dashstatus(packer, dashstatus_msg):
@@ -143,12 +141,12 @@ def create_es_dashstatus(packer, dashstatus_msg):
   if values["LKAS_State_Msg"] in (2, 3):
     values["LKAS_State_Msg"] = 0
 
-  return packer.make_can_msg("ES_DashStatus", 0, values)
+  return packer.make_can_msg("ES_DashStatus", CanBus.main, values)
 
 
-def create_infotainmentstatus(packer, infotainmentstatus_msg, visual_alert):
+def create_es_infotainment(packer, es_infotainment_msg, visual_alert):
   # Filter stock LKAS disabled and Keep hands on steering wheel OFF alerts
-  values = {s: infotainmentstatus_msg[s] for s in [
+  values = {s: es_infotainment_msg[s] for s in [
     "CHECKSUM",
     "COUNTER",
     "LKAS_State_Infotainment",
@@ -167,7 +165,7 @@ def create_infotainmentstatus(packer, infotainmentstatus_msg, visual_alert):
   if visual_alert == VisualAlert.fcw:
     values["LKAS_State_Infotainment"] = 2
 
-  return packer.make_can_msg("INFOTAINMENT_STATUS", 0, values)
+  return packer.make_can_msg("ES_Infotainment", CanBus.main, values)
 
 
 # *** Subaru Pre-global ***
@@ -177,18 +175,14 @@ def subaru_preglobal_checksum(packer, values, addr):
   return (sum(dat[:7])) % 256
 
 
-def create_preglobal_steering_control(packer, apply_steer, steer_req, frame, steer_step):
-
-  idx = (frame / steer_step) % 8
-
+def create_preglobal_steering_control(packer, apply_steer, steer_req):
   values = {
-    "COUNTER": idx,
     "LKAS_Command": apply_steer,
     "LKAS_Active": steer_req,
   }
   values["Checksum"] = subaru_preglobal_checksum(packer, values, "ES_LKAS")
 
-  return packer.make_can_msg("ES_LKAS", 0, values)
+  return packer.make_can_msg("ES_LKAS", CanBus.main, values)
 
 
 def create_preglobal_es_distance(packer, cruise_button, es_distance_msg):
@@ -215,4 +209,4 @@ def create_preglobal_es_distance(packer, cruise_button, es_distance_msg):
   values["Cruise_Button"] = cruise_button
   values["Checksum"] = subaru_preglobal_checksum(packer, values, "ES_Distance")
 
-  return packer.make_can_msg("ES_Distance", 0, values)
+  return packer.make_can_msg("ES_Distance", CanBus.main, values)

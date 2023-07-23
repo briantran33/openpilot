@@ -2,30 +2,20 @@
 from cereal import car
 from panda import Panda
 from common.conversions import Conversions as CV
-from selfdrive.car import STD_CARGO_KG, get_safety_config, create_mads_event
+from selfdrive.car import STD_CARGO_KG, get_safety_config
 from selfdrive.car.ford.fordcan import CanBus
-from selfdrive.car.ford.values import CAR, Ecu, BUTTON_STATES
+from selfdrive.car.ford.values import CANFD_CAR, CAR, Ecu
 from selfdrive.car.interfaces import CarInterfaceBase
 
-ButtonType = car.CarState.ButtonEvent.Type
 TransmissionType = car.CarParams.TransmissionType
 GearShifter = car.CarState.GearShifter
 
 
 class CarInterface(CarInterfaceBase):
-  def __init__(self, CP, CarController, CarState):
-    super().__init__(CP, CarController, CarState)
-
-    self.buttonStatesPrev = BUTTON_STATES.copy()
-
   @staticmethod
   def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
     ret.carName = "ford"
-
-    # These cars are dashcam only for lack of test coverage.
-    # Once a user confirms each car works and a test route is
-    # added to selfdrive/car/tests/routes.py, we can remove it from this list.
-    ret.dashcamOnly = candidate in {CAR.FOCUS_MK4}
+    ret.dashcamOnly = candidate in {CAR.F_150_MK14}
 
     ret.radarUnavailable = True
     ret.steerControlType = car.CarParams.SteerControlType.angle
@@ -43,6 +33,9 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[-1].safetyParam |= Panda.FLAG_FORD_LONG_CONTROL
       ret.openpilotLongitudinalControl = True
 
+    if candidate in CANFD_CAR:
+      ret.safetyConfigs[-1].safetyParam |= Panda.FLAG_FORD_CANFD
+
     if candidate == CAR.BRONCO_SPORT_MK1:
       ret.wheelbase = 2.67
       ret.steerRatio = 17.7
@@ -57,6 +50,12 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.025
       ret.steerRatio = 16.8
       ret.mass = 2050 + STD_CARGO_KG
+
+    elif candidate == CAR.F_150_MK14:
+      # required trim only on SuperCrew
+      ret.wheelbase = 3.69
+      ret.steerRatio = 17.0
+      ret.mass = 2000 + STD_CARGO_KG
 
     elif candidate == CAR.FOCUS_MK4:
       ret.wheelbase = 2.7
@@ -92,68 +91,14 @@ class CarInterface(CarInterfaceBase):
 
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
-    self.CS = self.sp_update_params(self.CS)
 
-    buttonEvents = []
-
-    for button in self.CS.buttonStates:
-      if self.CS.buttonStates[button] != self.buttonStatesPrev[button]:
-        be = car.CarState.ButtonEvent.new_message()
-        be.type = button
-        be.pressed = self.CS.buttonStates[button]
-        buttonEvents.append(be)
-
-    self.CS.mads_enabled = self.get_sp_cruise_main_state(ret, self.CS)
-
-    self.CS.accEnabled, buttonEvents = self.get_sp_v_cruise_non_pcm_state(ret, self.CS.accEnabled,
-                                                                          buttonEvents, c.vCruise)
-
-    if ret.cruiseState.available:
-      if self.enable_mads:
-        if not self.CS.prev_mads_enabled and self.CS.mads_enabled:
-          self.CS.madsEnabled = True
-        self.CS.madsEnabled = self.get_acc_mads(ret.cruiseState.enabled, self.CS.accEnabled, self.CS.madsEnabled)
-    else:
-      self.CS.madsEnabled = False
-
-    if not self.CP.pcmCruise or (self.CP.pcmCruise and self.CP.minEnableSpeed > 0):
-      if any(b.type == ButtonType.cancel for b in buttonEvents):
-        self.CS.madsEnabled, self.CS.accEnabled = self.get_sp_cancel_cruise_state(self.CS.madsEnabled)
-    if self.get_sp_pedal_disengage(ret):
-      self.CS.madsEnabled, self.CS.accEnabled = self.get_sp_cancel_cruise_state(self.CS.madsEnabled)
-      ret.cruiseState.enabled = False if self.CP.pcmCruise else self.CS.accEnabled
-
-    if self.CP.pcmCruise and self.CP.minEnableSpeed > 0 and self.CP.pcmCruiseSpeed:
-      if ret.gasPressed and not ret.cruiseState.enabled:
-        self.CS.accEnabled = False
-      self.CS.accEnabled = ret.cruiseState.enabled or self.CS.accEnabled
-
-    ret, self.CS = self.get_sp_common_state(ret, self.CS)
-
-    if self.CS.out.madsEnabled != self.CS.madsEnabled:
-      if self.mads_event_lock:
-        buttonEvents.append(create_mads_event(self.mads_event_lock))
-        self.mads_event_lock = False
-    else:
-      if not self.mads_event_lock:
-        buttonEvents.append(create_mads_event(self.mads_event_lock))
-        self.mads_event_lock = True
-
-    ret.buttonEvents = buttonEvents
-
-    events = self.create_common_events(ret, c, extra_gears=[GearShifter.manumatic], pcm_enable=False)
-
-    events, ret = self.create_sp_events(self.CS, ret, events)
-
+    events = self.create_common_events(ret, extra_gears=[GearShifter.manumatic])
     if not self.CS.vehicle_sensors_valid:
       events.add(car.CarEvent.EventName.vehicleSensorsInvalid)
     if self.CS.hybrid_platform:
       events.add(car.CarEvent.EventName.startupNoControl)
 
     ret.events = events.to_msg()
-
-    # update previous car states
-    self.buttonStatesPrev = self.CS.buttonStates.copy()
 
     return ret
 

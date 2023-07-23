@@ -1,12 +1,11 @@
-from dataclasses import dataclass
-from enum import IntFlag
-from panda import Panda
+from dataclasses import dataclass, field
+from enum import Enum, IntFlag
 from typing import Dict, List, Union
 
 from cereal import car
 from panda.python import uds
 from selfdrive.car import dbc_dict
-from selfdrive.car.docs_definitions import CarHarness, CarInfo, CarParts
+from selfdrive.car.docs_definitions import CarFootnote, CarHarness, CarInfo, CarParts, Column
 from selfdrive.car.fw_query_definitions import FwQueryConfig, Request, StdQueries, p16
 
 Ecu = car.CarParams.Ecu
@@ -27,14 +26,18 @@ class CarControllerParams:
       self.STEER_DELTA_DOWN = 40
     elif CP.carFingerprint == CAR.IMPREZA_2020:
       self.STEER_MAX = 1439
-    elif CP.safetyConfigs[0].safetyParam == Panda.FLAG_SUBARU_MAX_STEER_IMPREZA_2018:
-      self.STEER_MAX = 3071
     else:
       self.STEER_MAX = 2047
 
 
 class SubaruFlags(IntFlag):
   SEND_INFOTAINMENT = 1
+
+
+class CanBus:
+  main = 0
+  alt = 1
+  camera = 2
 
 
 class CAR:
@@ -53,10 +56,17 @@ class CAR:
   OUTBACK_PREGLOBAL_2018 = "SUBARU OUTBACK 2018 - 2019"
 
 
+class Footnote(Enum):
+  GLOBAL = CarFootnote(
+    "In the non-US market, openpilot requires the car to come equipped with EyeSight with Lane Keep Assistance.",
+    Column.PACKAGE)
+
+
 @dataclass
 class SubaruCarInfo(CarInfo):
   package: str = "EyeSight Driver Assistance"
-  car_parts: CarParts = CarParts.common([CarHarness.subaru_a])
+  car_parts: CarParts = field(default_factory=CarParts.common([CarHarness.subaru_a]))
+  footnotes: List[Enum] = field(default_factory=lambda: [Footnote.GLOBAL])
 
 
 CAR_INFO: Dict[str, Union[SubaruCarInfo, List[SubaruCarInfo]]] = {

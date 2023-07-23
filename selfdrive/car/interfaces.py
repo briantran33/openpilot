@@ -1,22 +1,17 @@
 import yaml
-import operator
-import numpy as np
 import os
 import time
 from abc import abstractmethod, ABC
-from json import load
-from typing import Any, Dict, Optional, Tuple, List, Callable, Union
+from typing import Any, Dict, Optional, Tuple, List, Callable
 
 from cereal import car
 from common.basedir import BASEDIR
 from common.conversions import Conversions as CV
 from common.kalman.simple_kalman import KF1D
 from common.numpy_fast import clip
-from common.params import Params, put_nonblocking, put_bool_nonblocking
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_hysteresis, gen_empty_fingerprint, scale_rot_inertia, scale_tire_stiffness
-from selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
-from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, V_CRUISE_UNSET, get_friction
+from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, get_friction
 from selfdrive.controls.lib.events import Events
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 
@@ -33,8 +28,6 @@ FRICTION_THRESHOLD = 0.3
 TORQUE_PARAMS_PATH = os.path.join(BASEDIR, 'selfdrive/car/torque_data/params.yaml')
 TORQUE_OVERRIDE_PATH = os.path.join(BASEDIR, 'selfdrive/car/torque_data/override.yaml')
 TORQUE_SUBSTITUTE_PATH = os.path.join(BASEDIR, 'selfdrive/car/torque_data/substitute.yaml')
-
-GAC_DICT = {1: 1, 2: 2, 3: 3}
 
 
 def get_torque_params(candidate):
@@ -61,93 +54,12 @@ def get_torque_params(candidate):
   return {key: out[i] for i, key in enumerate(params['legend'])}
 
 
-# lateral neural network feedforward
-class FluxModel:
-  # dict used to rename activation functions whose names aren't valid python identifiers
-  activation_function_names = {'σ': 'sigmoid'}
-  def __init__(self, params_file, zero_bias=False):
-    with open(params_file, "r") as f:
-      params = load(f)
-
-    self.input_size = params["input_size"]
-    self.output_size = params["output_size"]
-    self.input_mean = np.array(params["input_mean"], dtype=np.float32).T
-    self.input_std = np.array(params["input_std"], dtype=np.float32).T
-    self.layers = []
-
-    for layer_params in params["layers"]:
-      W = np.array(layer_params[next(key for key in layer_params.keys() if key.endswith('_W'))], dtype=np.float32).T
-      b = np.array(layer_params[next(key for key in layer_params.keys() if key.endswith('_b'))], dtype=np.float32).T
-      if zero_bias:
-        b = np.zeros_like(b)
-      activation = layer_params["activation"]
-      for k, v in self.activation_function_names.items():
-        activation = activation.replace(k, v)
-      self.layers.append((W, b, activation))
-    
-    self.validate_layers()
-    
-  # Begin activation functions.
-  # These are called by name using the keys in the model json file
-  def sigmoid(self, x):
-    return 1 / (1 + np.exp(-x))
-
-  def identity(self, x):
-    return x
-  # End activation functions
-
-  def forward(self, x):
-    for W, b, activation in self.layers:
-      x = getattr(self, activation)(x.dot(W) + b)
-    return x
-
-  def evaluate(self, input_array):
-    in_len = len(input_array)
-    if in_len != self.input_size:
-      # If the input is length 2-4, then it's a simplified evaluation.
-      # In that case, need to add on zeros to fill out the input array to match the correct length.
-      if 2 <= in_len:
-        input_array = input_array + [0] * (self.input_size - in_len)
-      else:
-        raise ValueError(f"Input array length {len(input_array)} must be length 2 or greater")
-        
-    input_array = np.array(input_array, dtype=np.float32)#.reshape(1, -1)
-
-    # Rescale the input array using the input_mean and input_std
-    input_array = (input_array - self.input_mean) / self.input_std
-
-    output_array = self.forward(input_array)
-
-    return float(output_array[0, 0])
-  
-  def validate_layers(self):
-    for W, b, activation in self.layers:
-      if not hasattr(self, activation):
-        raise ValueError(f"Unknown activation: {activation}")
-  
-def get_nn_ff_model_path(car):
-  return f"/data/openpilot/selfdrive/car/torque_data/lat_models/{car}.json"
-
-def has_nn_ff(car):
-  model_path = get_nn_ff_model_path(car)
-  if os.path.isfile(model_path):
-    return True
-  else:
-    return False
-  
-def initialize_nnff(car) -> Union[FluxModel, None]:
-  model = None
-  if has_nn_ff(car):
-    model = FluxModel(get_nn_ff_model_path(car))
-  return model
-
 # generic car and radar interfaces
 
 class CarInterfaceBase(ABC):
   def __init__(self, CP, CarController, CarState):
     self.CP = CP
     self.VM = VehicleModel(CP)
-    self.has_lat_torque_nnff = self.initialize_lat_torque_nnff(CP.carFingerprint)
 
     self.frame = 0
     self.steering_unpressed = 0
@@ -171,39 +83,6 @@ class CarInterfaceBase(ABC):
     self.CC = None
     if CarController is not None:
       self.CC = CarController(self.cp.dbc_name, CP, self.VM)
-    
-    self.param_s = Params()
-    self.disengage_on_accelerator = self.param_s.get_bool("DisengageOnAccelerator")
-    self.enable_mads = self.param_s.get_bool("EnableMads")
-    self.mads_disengage_lateral_on_brake = self.param_s.get_bool("DisengageLateralOnBrake")
-    self.mads_ndlob = self.enable_mads and not self.mads_disengage_lateral_on_brake
-    self.gear_warning = 0
-    self.cruise_cancelled_btn = True
-    self.acc_mads_combo = self.param_s.get_bool("AccMadsCombo")
-    self.below_speed_pause = self.param_s.get_bool("BelowSpeedPause")
-    self.prev_acc_mads_combo = False
-    self.mads_event_lock = True
-    self.gap_button_counter = 0
-    self.experimental_mode_hold = False
-    self.experimental_mode = self.param_s.get_bool("ExperimentalMode")
-    self._frame = 0
-    self.op_lookup = {"+": operator.add, "-": operator.sub}
-    self.gac = self.param_s.get_bool("GapAdjustCruise")
-    self.gac_mode = round(float(self.param_s.get("GapAdjustCruiseMode", encoding="utf8")))
-    self.prev_gac_button = False
-    self.gac_button_counter = 0
-    self.gac_min = -1
-    self.gac_max = -1
-    self.reverse_dm_cam = self.param_s.get_bool("ReverseDmCam")
-    self.mads_main_toggle = self.param_s.get_bool("MadsCruiseMain")
-    self.lkas_toggle = self.param_s.get_bool("LkasToggle")
-      
-  def get_ff_nn(self, x):
-    return self.lat_torque_nnff_model.evaluate(x)
-  
-  def initialize_lat_torque_nnff(self, car):
-    self.lat_torque_nnff_model = initialize_nnff(car)
-    return (self.lat_torque_nnff_model is not None)
 
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
@@ -220,8 +99,6 @@ class CarInterfaceBase(ABC):
   def get_params(cls, candidate: str, fingerprint: Dict[int, Dict[int, int]], car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool):
     ret = CarInterfaceBase.get_std_params(candidate)
     ret = cls._get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs)
-    if Params().get_bool("EnforceTorqueLateral") and ret.steerControlType != car.CarParams.SteerControlType.angle:
-      ret = CarInterfaceBase.sp_configure_torque_tune(candidate, ret)
 
     # Set common params using fields set by the car interface
     # TODO: get actual value, for now starting with reasonable value for
@@ -254,8 +131,7 @@ class CarInterfaceBase(ABC):
   def get_steer_feedforward_function(self):
     return self.get_steer_feedforward_default
 
-  @staticmethod
-  def torque_from_lateral_accel_linear(lateral_accel_value: float, torque_params: car.CarParams.LateralTorqueTuning,
+  def torque_from_lateral_accel_linear(self, lateral_accel_value: float, torque_params: car.CarParams.LateralTorqueTuning,
                                        lateral_accel_error: float, lateral_accel_deadzone: float, friction_compensation: bool) -> float:
     # The default is a linear relationship between torque and lateral acceleration (accounting for road roll and steering friction)
     friction = get_friction(lateral_accel_error, lateral_accel_deadzone, FRICTION_THRESHOLD, torque_params, friction_compensation)
@@ -280,7 +156,6 @@ class CarInterfaceBase(ABC):
     ret.wheelSpeedFactor = 1.0
 
     ret.pcmCruise = True     # openpilot's state is tied to the PCM's cruise state on most cars
-    ret.pcmCruiseSpeed = True     # openpilot's state is tied to the PCM's cruise speed
     ret.minEnableSpeed = -1. # enable is done by stock ACC, so ignore this
     ret.steerRatioRear = 0.  # no rear steering, at least on the listed cars aboveA
     ret.openpilotLongitudinalControl = False
@@ -315,11 +190,6 @@ class CarInterfaceBase(ABC):
     tune.torque.latAccelFactor = params['LAT_ACCEL_FACTOR']
     tune.torque.latAccelOffset = 0.0
     tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg
-
-  @staticmethod
-  def sp_configure_torque_tune(candidate, ret):
-    CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
-    return ret
 
   @abstractmethod
   def _update(self, c: car.CarControl) -> car.CarState:
@@ -362,25 +232,19 @@ class CarInterfaceBase(ABC):
   def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     pass
 
-  def create_common_events(self, cs_out, c, extra_gears=None, pcm_enable=True, allow_enable=True,
+  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, allow_enable=True,
                            enable_buttons=(ButtonType.accelCruise, ButtonType.decelCruise)):
     events = Events()
 
-    if cs_out.doorOpen and (c.latActive or c.longActive):
+    if cs_out.doorOpen:
       events.add(EventName.doorOpen)
-    if cs_out.seatbeltUnlatched and cs_out.gearShifter != GearShifter.park:
+    if cs_out.seatbeltUnlatched:
       events.add(EventName.seatbeltNotLatched)
-    if cs_out.gearShifter != GearShifter.drive and cs_out.gearShifter not in extra_gears and not \
-            (cs_out.gearShifter == GearShifter.unknown and self.gear_warning < int(0.5/DT_CTRL)):
-      if cs_out.vEgo < 5:
-        events.add(EventName.silentWrongGear)
-      else:
-        events.add(EventName.wrongGear)
+    if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
+       cs_out.gearShifter not in extra_gears):
+      events.add(EventName.wrongGear)
     if cs_out.gearShifter == GearShifter.reverse:
-      if not self.reverse_dm_cam and cs_out.vEgo < 5:
-        events.add(EventName.spReverseGear)
-      elif cs_out.vEgo >= 5:
-        events.add(EventName.reverseGear)
+      events.add(EventName.reverseGear)
     if not cs_out.cruiseState.available:
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
@@ -394,12 +258,7 @@ class CarInterfaceBase(ABC):
     if cs_out.cruiseState.nonAdaptive:
       events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
-      if cs_out.madsEnabled:
-        cs_out.disengageByBrake = True
-      if cs_out.cruiseState.enabled:
-        events.add(EventName.brakeHold)
-      else:
-        events.add(EventName.silentBrakeHold)
+      events.add(EventName.brakeHold)
     if cs_out.parkingBrake:
       events.add(EventName.parkBrake)
     if cs_out.accFaulted:
@@ -407,16 +266,14 @@ class CarInterfaceBase(ABC):
     if cs_out.steeringPressed:
       events.add(EventName.steerOverride)
 
-    self.gear_warning = self.gear_warning + 1 if cs_out.gearShifter == GearShifter.unknown else 0
-
     # Handle button presses
-    #for b in cs_out.buttonEvents:
-    #  # Enable OP long on falling edge of enable buttons (defaults to accelCruise and decelCruise, overridable per-port)
-    #  if not self.CP.pcmCruise and (b.type in enable_buttons and not b.pressed):
-    #    events.add(EventName.buttonEnable)
-    #  # Disable on rising and falling edge of cancel for both stock and OP long
-    #  if b.type == ButtonType.cancel:
-    #    events.add(EventName.buttonCancel)
+    for b in cs_out.buttonEvents:
+      # Enable OP long on falling edge of enable buttons (defaults to accelCruise and decelCruise, overridable per-port)
+      if not self.CP.pcmCruise and (b.type in enable_buttons and not b.pressed):
+        events.add(EventName.buttonEnable)
+      # Disable on rising and falling edge of cancel for both stock and OP long
+      if b.type == ButtonType.cancel:
+        events.add(EventName.buttonCancel)
 
     # Handle permanent and temporary steering faults
     self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
@@ -448,214 +305,6 @@ class CarInterfaceBase(ABC):
 
     return events
 
-  @staticmethod
-  def sp_v_cruise_initialized(v_cruise):
-    return v_cruise != V_CRUISE_UNSET
-
-  def get_acc_mads(self, cruiseState_enabled, acc_enabled, mads_enabled):
-    if self.acc_mads_combo:
-      if not self.prev_acc_mads_combo and (cruiseState_enabled or acc_enabled):
-        mads_enabled = True
-      self.prev_acc_mads_combo = (cruiseState_enabled or acc_enabled)
-
-    return mads_enabled
-
-  def get_sp_v_cruise_non_pcm_state(self, cs_out, acc_enabled, button_events, vCruise,
-                                    enable_buttons=(ButtonType.accelCruise, ButtonType.decelCruise),
-                                    resume_button=(ButtonType.accelCruise, ButtonType.resumeCruise)):
-
-    if cs_out.cruiseState.available:
-      for b in button_events:
-        if not self.CP.pcmCruise or not self.CP.pcmCruiseSpeed:
-          if b.type in enable_buttons and not b.pressed:
-            acc_enabled = True
-        if not self.CP.pcmCruise:
-          if b.type in resume_button and not self.sp_v_cruise_initialized(vCruise):
-            acc_enabled = False
-        if not self.CP.pcmCruiseSpeed:
-          if b.type == ButtonType.accelCruise and not cs_out.cruiseState.enabled:
-            acc_enabled = False
-    else:
-      acc_enabled = False
-
-    return acc_enabled, button_events
-
-  def get_sp_cancel_cruise_state(self, mads_enabled, acc_enabled=False):
-    mads_enabled = False if not self.enable_mads else mads_enabled
-    return mads_enabled, acc_enabled
-
-  def get_sp_pedal_disengage(self, cs_out):
-    brake = cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)
-    regen = cs_out.regenBraking and (not self.CS.out.regenBraking or not cs_out.standstill)
-    return brake or regen
-
-  def get_sp_cruise_main_state(self, cs_out, CS):
-    if not CS.control_initialized:
-      mads_enabled = False
-    elif not self.mads_main_toggle:
-      mads_enabled = False
-    else:
-      mads_enabled = cs_out.cruiseState.available
-
-    return mads_enabled
-
-  def get_sp_common_state(self, cs_out, CS, gear_allowed=True, gap_button=False):
-    cs_out.cruiseState.enabled = CS.accEnabled if not self.CP.pcmCruise or not self.CP.pcmCruiseSpeed else cs_out.cruiseState.enabled
-    if not self.enable_mads:
-      if cs_out.cruiseState.enabled and not CS.out.cruiseState.enabled:
-        CS.madsEnabled = True
-      elif not cs_out.cruiseState.enabled and CS.out.cruiseState.enabled:
-        CS.madsEnabled = False
-
-    self.toggle_exp_mode(gap_button)
-
-    cs_out.belowLaneChangeSpeed = cs_out.vEgo < LANE_CHANGE_SPEED_MIN and self.below_speed_pause
-
-    if cs_out.gearShifter in [GearShifter.park, GearShifter.reverse] or cs_out.doorOpen or \
-      (cs_out.seatbeltUnlatched and cs_out.gearShifter != GearShifter.park):
-      gear_allowed = False
-
-    cs_out.latActive = gear_allowed
-
-    if not CS.control_initialized:
-      CS.control_initialized = True
-
-    # Disable on rising edge of gas or brake. Also disable on brake when speed > 0.
-    if (cs_out.gasPressed and not self.CS.out.gasPressed and self.disengage_on_accelerator) or \
-      (cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)) or \
-      (cs_out.regenBraking and (not self.CS.out.regenBraking or not cs_out.standstill)):
-      if CS.madsEnabled:
-        CS.disengageByBrake = True
-
-    cs_out.madsEnabled = CS.madsEnabled
-    cs_out.accEnabled = CS.accEnabled
-    cs_out.disengageByBrake = CS.disengageByBrake
-    cs_out.brakeLights |= cs_out.brakePressed or cs_out.brakeHoldActive or cs_out.parkingBrake or cs_out.regenBraking
-
-    return cs_out, CS
-
-  def toggle_exp_mode(self, gap_pressed):
-    if not self.CP.openpilotLongitudinalControl:
-      return None
-    if gap_pressed:
-      if not self.experimental_mode_hold:
-        self.gap_button_counter += 1
-        if self.gap_button_counter > 50:
-          self.gap_button_counter = 0
-          self.experimental_mode_hold = True
-          put_bool_nonblocking("ExperimentalMode", not self.experimental_mode)
-    else:
-      self.gap_button_counter = 0
-      self.experimental_mode_hold = False
-
-  def get_sp_gac_state(self, gac_tr, gac_min, gac_max, inc_dec):
-    op = self.op_lookup.get(inc_dec)
-    gac_tr = op(gac_tr, 1)
-    if inc_dec == "+":
-      gac_tr = gac_min if gac_tr > gac_max else gac_tr
-    else:
-      gac_tr = gac_max if gac_tr < gac_min else gac_tr
-    return int(gac_tr)
-
-  def get_sp_distance(self, gac_tr, gac_max, gac_dict=None):
-    if gac_dict is None:
-      gac_dict = GAC_DICT
-    return next((key for key, value in gac_dict.items() if value == gac_tr), gac_max)
-
-  def toggle_gac(self, cs_out, CS, gac_button, gac_min, gac_max, gac_default, inc_dec):
-    if not self.CP.openpilotLongitudinalControl or not self.gac:
-      cs_out.gapAdjustCruiseTr = 4
-      CS.gac_tr = gac_default
-      return cs_out, CS
-    if self.gac_min != gac_min:
-      self.gac_min = gac_min
-      put_nonblocking("GapAdjustCruiseMin", str(self.gac_min))
-    if self.gac_max != gac_max:
-      self.gac_max = gac_max
-      put_nonblocking("GapAdjustCruiseMax", str(self.gac_max))
-    if self.gac_mode in (0, 2):
-      if gac_button:
-        self.gac_button_counter += 1
-      elif self.prev_gac_button and not gac_button and self.gac_button_counter < 50:
-        self.gac_button_counter = 0
-        CS.gac_tr = self.get_sp_gac_state(CS.gac_tr, gac_min, gac_max, inc_dec)
-        put_nonblocking("GapAdjustCruiseTr", str(CS.gac_tr))
-      else:
-        self.gac_button_counter = 0
-    self.prev_gac_button = gac_button
-    cs_out.gapAdjustCruiseTr = self.get_sp_distance(CS.gac_tr, gac_max)
-    return cs_out, CS
-
-  def create_sp_events(self, CS, cs_out, events, main_enabled=False, allow_enable=True, enable_pressed=False,
-                       enable_from_brake=False, enable_pressed_long=False,
-                       enable_buttons=(ButtonType.accelCruise, ButtonType.decelCruise)):
-
-    if not cs_out.brakePressed and not cs_out.brakeHoldActive and not cs_out.parkingBrake and not cs_out.regenBraking:
-      if cs_out.disengageByBrake and cs_out.madsEnabled:
-        enable_pressed = True
-        enable_from_brake = True
-      CS.disengageByBrake = False
-      cs_out.disengageByBrake = False
-
-    for b in cs_out.buttonEvents:
-      # Enable OP long on falling edge of enable buttons (defaults to accelCruise and decelCruise, overridable per-port)
-      if not self.CP.pcmCruise:
-        if b.type in enable_buttons and not b.pressed:
-          enable_pressed = True
-          enable_pressed_long = True
-      # Disable on rising and falling edge of cancel for both stock and OP long
-      if b.type == ButtonType.cancel:
-        if not cs_out.madsEnabled:
-          events.add(EventName.buttonCancel)
-        elif not self.cruise_cancelled_btn:
-          self.cruise_cancelled_btn = True
-          events.add(EventName.manualLongitudinalRequired)
-      # do disable on MADS button if ACC is disabled
-      if b.type == ButtonType.altButton1 and b.pressed:
-        if not cs_out.madsEnabled:  # disabled MADS
-          if not cs_out.cruiseState.enabled:
-            events.add(EventName.buttonCancel)
-          else:
-            events.add(EventName.manualSteeringRequired)
-        else:  # enabled MADS
-          if not cs_out.cruiseState.enabled:
-            enable_pressed = True
-    if self.CP.pcmCruise:
-      # do disable on button down
-      if main_enabled:
-        if any(CS.main_buttons) and not cs_out.cruiseState.enabled:
-          if not cs_out.madsEnabled:
-            events.add(EventName.buttonCancel)
-      # do enable on both accel and decel buttons
-      if cs_out.cruiseState.enabled and not CS.out.cruiseState.enabled and allow_enable:
-        enable_pressed = True
-        enable_pressed_long = True
-      elif not cs_out.cruiseState.enabled:
-        if not cs_out.madsEnabled:
-          events.add(EventName.buttonCancel)
-        elif not self.enable_mads:
-          cs_out.madsEnabled = False
-    if enable_pressed:
-      if enable_from_brake:
-        events.add(EventName.silentButtonEnable)
-      else:
-        events.add(EventName.buttonEnable)
-    if cs_out.disengageByBrake and not cs_out.standstill and enable_pressed_long:
-      events.add(EventName.cruiseEngageBlocked)
-
-    self.cruise_cancelled_btn = False if cs_out.cruiseState.enabled else True
-
-    return events, cs_out
-
-  def sp_update_params(self, CS):
-    self.experimental_mode = self.param_s.get_bool("ExperimentalMode")
-    CS.gac_tr = round(float(self.param_s.get("GapAdjustCruiseTr", encoding="utf8")))
-    self._frame += 1
-    if self._frame % 300 == 0:
-      self._frame = 0
-      self.gac_mode = round(float(self.param_s.get("GapAdjustCruiseMode", encoding="utf8")))
-      self.reverse_dm_cam = self.param_s.get_bool("ReverseDmCam")
-    return CS
 
 class RadarInterfaceBase(ABC):
   def __init__(self, CP):
@@ -686,16 +335,6 @@ class CarStateBase(ABC):
     self.right_blinker_prev = False
     self.cluster_speed_hyst_gap = 0.0
     self.cluster_min_speed = 0.0  # min speed before dropping to 0
-
-    self.param_s = Params()
-    self.accEnabled = False
-    self.madsEnabled = False
-    self.disengageByBrake = False
-    self.mads_enabled = False
-    self.prev_mads_enabled = False
-    self.control_initialized = False
-    self.gap_dist_button = 0
-    self.gac_tr = round(float(self.param_s.get("GapAdjustCruiseTr", encoding="utf8")))
 
     # Q = np.matrix([[0.0, 0.0], [0.0, 100.0]])
     # R = 0.3
@@ -757,16 +396,6 @@ class CarStateBase(ABC):
     self.right_blinker_prev = right_blinker_stalk
 
     return bool(left_blinker_stalk or self.left_blinker_cnt > 0), bool(right_blinker_stalk or self.right_blinker_cnt > 0)
-
-  def update_custom_stock_long(self, cruise_button, final_speed_kph, target_speed, v_set_dis, speed_diff, button_type):
-    customStockLong = car.CarState.CustomStockLong.new_message()
-    customStockLong.cruiseButton = 0 if cruise_button is None else cruise_button
-    customStockLong.finalSpeedKph = final_speed_kph
-    customStockLong.targetSpeed = target_speed
-    customStockLong.vSetDis = v_set_dis
-    customStockLong.speedDiff = speed_diff
-    customStockLong.buttonType = button_type
-    return customStockLong
 
   @staticmethod
   def parse_gear_shifter(gear: Optional[str]) -> car.CarState.GearShifter:

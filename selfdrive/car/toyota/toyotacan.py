@@ -9,35 +9,35 @@ def create_steer_command(packer, steer, steer_req):
   return packer.make_can_msg("STEERING_LKA", 0, values)
 
 
-def create_lta_steer_command(packer, steer, steer_req, raw_cnt):
+def create_lta_steer_command(packer, steer_angle, steer_req, frame, setme_x64):
   """Creates a CAN message for the Toyota LTA Steer Command."""
 
   values = {
-    "COUNTER": raw_cnt + 128,
+    "COUNTER": frame + 128,
     "SETME_X1": 1,
     "SETME_X3": 3,
     "PERCENTAGE": 100,
-    "SETME_X64": 0,
+    "SETME_X64": setme_x64,
     "ANGLE": 0,
-    "STEER_ANGLE_CMD": steer,
+    "STEER_ANGLE_CMD": steer_angle,
     "STEER_REQUEST": steer_req,
     "STEER_REQUEST_2": steer_req,
-    "BIT": 0,
+    "CLEAR_HOLD_STEERING_ALERT": 0,
   }
   return packer.make_can_msg("STEERING_LTA", 0, values)
 
 
-def create_accel_command(packer, accel, pcm_cancel, standstill_req, lead, acc_type, reverse_acc, gac_send):
+def create_accel_command(packer, accel, pcm_cancel, standstill_req, lead, acc_type):
   # TODO: find the exact canceling bit that does not create a chime
   values = {
     "ACCEL_CMD": accel,
     "ACC_TYPE": acc_type,
-    "DISTANCE": gac_send,
+    "DISTANCE": 0,
     "MINI_CAR": lead,
     "PERMIT_BRAKING": 1,
     "RELEASE_STANDSTILL": not standstill_req,
     "CANCEL_REQ": pcm_cancel,
-    "ALLOW_LONG_PRESS": reverse_acc,
+    "ALLOW_LONG_PRESS": 1,
   }
   return packer.make_can_msg("ACC_CONTROL", 0, values)
 
@@ -46,7 +46,7 @@ def create_acc_cancel_command(packer):
   values = {
     "GAS_RELEASED": 0,
     "CRUISE_ACTIVE": 0,
-    "STANDSTILL_ON": 0,
+    "ACC_BRAKING": 0,
     "ACCEL_NET": 0,
     "CRUISE_STATE": 0,
     "CANCEL_REQ": 1,
@@ -66,20 +66,18 @@ def create_fcw_command(packer, fcw):
   return packer.make_can_msg("ACC_HUD", 0, values)
 
 
-def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, lat_active, stock_lkas_hud,
-                      mads_enabled):
-  lateral_paused = mads_enabled and not lat_active
+def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, enabled, stock_lkas_hud):
   values = {
     "TWO_BEEPS": chime,
-    "LDA_ALERT": steer if mads_enabled else 0,
-    "RIGHT_LINE": 0 if not mads_enabled else 2 if lateral_paused else 3 if right_lane_depart else 1 if right_line else 2,
-    "LEFT_LINE": 0 if not mads_enabled else 2 if lateral_paused else 3 if left_lane_depart else 1 if left_line else 2,
-    "BARRIERS": 1 if lat_active else 0,
-    "LKAS_STATUS": 2 if mads_enabled else 1 if lateral_paused else 0,
+    "LDA_ALERT": steer,
+    "RIGHT_LINE": 3 if right_lane_depart else 1 if right_line else 2,
+    "LEFT_LINE": 3 if left_lane_depart else 1 if left_line else 2,
+    "BARRIERS": 1 if enabled else 0,
 
     # static signals
     "SET_ME_X02": 2,
     "SET_ME_X01": 1,
+    "LKAS_STATUS": 1,
     "REPEATED_BEEPS": 0,
     "LANE_SWAY_FLD": 7,
     "LANE_SWAY_BUZZER": 0,
@@ -89,7 +87,7 @@ def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_dep
     "LANE_SWAY_SENSITIVITY": 2,
     "LANE_SWAY_TOGGLE": 1,
     "LDA_ON_MESSAGE": 0,
-    "LDA_SPEED_TOO_LOW": 0,
+    "LDA_MESSAGES": 0,
     "LDA_SA_TOGGLE": 1,
     "LDA_SENSITIVITY": 2,
     "LDA_UNAVAILABLE": 0,

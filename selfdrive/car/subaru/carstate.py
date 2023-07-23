@@ -4,7 +4,7 @@ from opendbc.can.can_define import CANDefine
 from common.conversions import Conversions as CV
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
-from selfdrive.car.subaru.values import DBC, CAR, GLOBAL_GEN2, PREGLOBAL_CARS, SubaruFlags
+from selfdrive.car.subaru.values import DBC, CAR, GLOBAL_GEN2, PREGLOBAL_CARS, CanBus, SubaruFlags
 
 
 class CarState(CarStateBase):
@@ -13,14 +13,8 @@ class CarState(CarStateBase):
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["Transmission"]["Gear"]
 
-    self.lkas_enabled = None
-    self.prev_lkas_enabled = None
-
   def update(self, cp, cp_cam, cp_body):
     ret = car.CarState.new_message()
-
-    self.prev_mads_enabled = self.mads_enabled
-    self.prev_lkas_enabled = self.lkas_enabled
 
     ret.gas = cp.vl["Throttle"]["Throttle_Pedal"] / 255.
     ret.gasPressed = ret.gas > 1e-5
@@ -29,10 +23,6 @@ class CarState(CarStateBase):
     else:
       cp_brakes = cp_body if self.car_fingerprint in GLOBAL_GEN2 else cp
       ret.brakePressed = cp_brakes.vl["Brake_Status"]["Brake"] == 1
-
-    brake_msg = "ES_Brake" if self.car_fingerprint in PREGLOBAL_CARS else "ES_DashStatus"
-    brake_sig = "Brake_Light" if self.car_fingerprint in PREGLOBAL_CARS else "Brake_Lights"
-    ret.brakeLights = bool(cp_cam.vl[brake_msg][brake_sig])
 
     cp_wheels = cp_body if self.car_fingerprint in GLOBAL_GEN2 else cp
     ret.wheelSpeeds = self.get_wheel_speeds(
@@ -45,14 +35,9 @@ class CarState(CarStateBase):
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw == 0
 
-    if self.car_fingerprint not in PREGLOBAL_CARS:
-      self.lkas_enabled = cp_cam.vl["ES_LKAS_State"]["LKAS_Dash_State"]
-    if self.prev_lkas_enabled is None:
-      self.prev_lkas_enabled = self.lkas_enabled
-
     # continuous blinker signals for assisted lane change
-    ret.leftBlinker, ret.rightBlinker = ret.leftBlinkerOn, ret.rightBlinkerOn = self.update_blinker_from_lamp(50, cp.vl["Dashlights"]["LEFT_BLINKER"],
-                                                                                                                    cp.vl["Dashlights"]["RIGHT_BLINKER"])
+    ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(50, cp.vl["Dashlights"]["LEFT_BLINKER"],
+                                                                          cp.vl["Dashlights"]["RIGHT_BLINKER"])
 
     if self.CP.enableBsm:
       ret.leftBlindspot = (cp.vl["BSD_RCTA"]["L_ADJACENT"] == 1) or (cp.vl["BSD_RCTA"]["L_APPROACHING"] == 1)
@@ -84,6 +69,7 @@ class CarState(CarStateBase):
                         cp.vl["BodyInfo"]["DOOR_OPEN_FL"]])
     ret.steerFaultPermanent = cp.vl["Steering_Torque"]["Steer_Error_1"] == 1
 
+    cp_es_distance = cp_body if self.car_fingerprint in GLOBAL_GEN2 else cp_cam
     if self.car_fingerprint in PREGLOBAL_CARS:
       self.cruise_button = cp_cam.vl["ES_Distance"]["Cruise_Button"]
       self.ready = not cp_cam.vl["ES_DashStatus"]["Not_Ready_Startup"]
@@ -91,19 +77,22 @@ class CarState(CarStateBase):
       ret.steerFaultTemporary = cp.vl["Steering_Torque"]["Steer_Warning"] == 1
       ret.cruiseState.nonAdaptive = cp_cam.vl["ES_DashStatus"]["Conventional_Cruise"] == 1
       ret.cruiseState.standstill = cp_cam.vl["ES_DashStatus"]["Cruise_State"] == 3
-      ret.stockFcw = cp_cam.vl["ES_LKAS_State"]["LKAS_Alert"] == 2
+      ret.stockFcw = (cp_cam.vl["ES_LKAS_State"]["LKAS_Alert"] == 1) or \
+                     (cp_cam.vl["ES_LKAS_State"]["LKAS_Alert"] == 2)
+      # 8 is known AEB, there are a few other values related to AEB we ignore
+      ret.stockAeb = (cp_es_distance.vl["ES_Brake"]["AEB_Status"] == 8) and \
+                     (cp_es_distance.vl["ES_Brake"]["Brake_Pressure"] != 0)
       self.es_lkas_state_msg = copy.copy(cp_cam.vl["ES_LKAS_State"])
 
-    cp_es_distance = cp_body if self.car_fingerprint in GLOBAL_GEN2 else cp_cam
     self.es_distance_msg = copy.copy(cp_es_distance.vl["ES_Distance"])
     self.es_dashstatus_msg = copy.copy(cp_cam.vl["ES_DashStatus"])
     if self.CP.flags & SubaruFlags.SEND_INFOTAINMENT:
-      self.es_infotainmentstatus_msg = copy.copy(cp_cam.vl["INFOTAINMENT_STATUS"])
+      self.es_infotainment_msg = copy.copy(cp_cam.vl["ES_Infotainment"])
 
     return ret
 
   @staticmethod
-  def get_common_global_signals():
+  def get_common_global_body_signals():
     signals = [
       ("Cruise_On", "CruiseControl"),
       ("Cruise_Activated", "CruiseControl"),
@@ -122,8 +111,10 @@ class CarState(CarStateBase):
     return signals, checks
 
   @staticmethod
-  def get_global_es_distance_signals():
+  def get_common_global_es_signals():
     signals = [
+      ("AEB_Status", "ES_Brake"),
+      ("Brake_Pressure", "ES_Brake"),
       ("COUNTER", "ES_Distance"),
       ("CHECKSUM", "ES_Distance"),
       ("Signal1", "ES_Distance"),
@@ -145,7 +136,9 @@ class CarState(CarStateBase):
       ("Cruise_Resume", "ES_Distance"),
       ("Signal6", "ES_Distance"),
     ]
+
     checks = [
+      ("ES_Brake", 20),
       ("ES_Distance", 20),
     ]
 
@@ -192,8 +185,8 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint not in PREGLOBAL_CARS:
       if CP.carFingerprint not in GLOBAL_GEN2:
-        signals += CarState.get_common_global_signals()[0]
-        checks += CarState.get_common_global_signals()[1]
+        signals += CarState.get_common_global_body_signals()[0]
+        checks += CarState.get_common_global_body_signals()[1]
 
       signals += [
         ("Steer_Warning", "Steering_Torque"),
@@ -232,7 +225,7 @@ class CarState(CarStateBase):
           ("CruiseControl", 50),
         ]
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus.main)
 
   @staticmethod
   def get_cam_can_parser(CP):
@@ -258,13 +251,11 @@ class CarState(CarStateBase):
         ("Signal6", "ES_Distance"),
         ("Cruise_Button", "ES_Distance"),
         ("Signal7", "ES_Distance"),
-        ("Brake_Light", "ES_Brake"),
       ]
 
       checks = [
         ("ES_DashStatus", 20),
         ("ES_Distance", 20),
-        ("ES_Brake", 20),
       ]
     else:
       signals = [
@@ -320,28 +311,28 @@ class CarState(CarStateBase):
       ]
 
       if CP.carFingerprint not in GLOBAL_GEN2:
-        signals += CarState.get_global_es_distance_signals()[0]
-        checks += CarState.get_global_es_distance_signals()[1]
+        signals += CarState.get_common_global_es_signals()[0]
+        checks += CarState.get_common_global_es_signals()[1]
 
       if CP.flags & SubaruFlags.SEND_INFOTAINMENT:
         signals += [
-          ("COUNTER", "INFOTAINMENT_STATUS"),
-          ("CHECKSUM", "INFOTAINMENT_STATUS"),
-          ("LKAS_State_Infotainment", "INFOTAINMENT_STATUS"),
-          ("LKAS_Blue_Lines", "INFOTAINMENT_STATUS"),
-          ("Signal1", "INFOTAINMENT_STATUS"),
-          ("Signal2", "INFOTAINMENT_STATUS"),
+          ("COUNTER", "ES_Infotainment"),
+          ("CHECKSUM", "ES_Infotainment"),
+          ("LKAS_State_Infotainment", "ES_Infotainment"),
+          ("LKAS_Blue_Lines", "ES_Infotainment"),
+          ("Signal1", "ES_Infotainment"),
+          ("Signal2", "ES_Infotainment"),
         ]
-        checks.append(("INFOTAINMENT_STATUS", 10))
+        checks.append(("ES_Infotainment", 10))
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus.camera)
 
   @staticmethod
   def get_body_can_parser(CP):
     if CP.carFingerprint in GLOBAL_GEN2:
-      signals, checks = CarState.get_common_global_signals()
-      signals += CarState.get_global_es_distance_signals()[0]
-      checks += CarState.get_global_es_distance_signals()[1]
-      return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 1)
+      signals, checks = CarState.get_common_global_body_signals()
+      signals += CarState.get_common_global_es_signals()[0]
+      checks += CarState.get_common_global_es_signals()[1]
+      return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus.alt)
 
     return None

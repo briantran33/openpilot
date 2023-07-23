@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import numpy as np
 from cereal import car
 from common.params import Params
@@ -31,18 +32,17 @@ def plannerd_thread(sm=None, pm=None):
 
   cloudlog.info("plannerd is waiting for CarParams")
   params = Params()
-  CP = car.CarParams.from_bytes(params.get("CarParams", block=True))
+  with car.CarParams.from_bytes(params.get("CarParams", block=True)) as msg:
+    CP = msg
   cloudlog.info("plannerd got CarParams: %s", CP.carName)
 
-  use_lanelines = False
-
-  cloudlog.event("e2e mode", on=use_lanelines)
+  debug_mode = bool(int(os.getenv("DEBUG", "0")))
 
   longitudinal_planner = LongitudinalPlanner(CP)
-  lateral_planner = LateralPlanner(CP, use_lanelines=use_lanelines)
+  lateral_planner = LateralPlanner(CP, debug=debug_mode)
 
   if sm is None:
-    sm = messaging.SubMaster(['carControl', 'carState', 'controlsState', 'radarState', 'modelV2', 'longitudinalPlan', 'lateralPlan', 'liveMapData', 'navInstruction', 'e2eLongState'],
+    sm = messaging.SubMaster(['carControl', 'carState', 'controlsState', 'radarState', 'modelV2'],
                              poll=['radarState', 'modelV2'], ignore_avg_freq=['radarState'])
 
   if pm is None:

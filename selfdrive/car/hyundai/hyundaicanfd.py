@@ -35,13 +35,13 @@ class CanBus(CanBusBase):
     return self._cam
 
 
-def create_steering_messages(packer, CP, CAN, enabled, lat_active, apply_steer , lateral_paused, blinking_icon):
+def create_steering_messages(packer, CP, CAN, enabled, lat_active, apply_steer):
 
   ret = []
 
   values = {
     "LKA_MODE": 2,
-    "LKA_ICON": 2 if lat_active else 3 if blinking_icon else 1 if lateral_paused else 0,
+    "LKA_ICON": 2 if enabled else 1,
     "TORQUE_REQUEST": apply_steer,
     "LKA_ASSIST": 0,
     "STEER_REQ": 1 if lat_active else 0,
@@ -60,11 +60,11 @@ def create_steering_messages(packer, CP, CAN, enabled, lat_active, apply_steer ,
 
   return ret
 
-def create_cam_0x2a4(packer, CAN, camera_values):
-  camera_values.update({
-    "BYTE7": 0,
-  })
-  return packer.make_can_msg("CAM_0x2a4", CAN.ACAN, camera_values)
+def create_cam_0x2a4(packer, CAN, cam_0x2a4):
+  values = {f"BYTE{i}": cam_0x2a4[f"BYTE{i}"] for i in range(3, 24)}
+  values['COUNTER'] = cam_0x2a4['COUNTER']
+  values["BYTE7"] = 0
+  return packer.make_can_msg("CAM_0x2a4", CAN.ACAN, values)
 
 def create_buttons(packer, CP, CAN, cnt, btn):
   values = {
@@ -76,17 +76,40 @@ def create_buttons(packer, CP, CAN, cnt, btn):
   bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_HDA2 else CAN.CAM
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
-def create_acc_cancel(packer, CAN, cruise_info_copy):
-  values = cruise_info_copy
+def create_acc_cancel(packer, CP, CAN, cruise_info_copy):
+  # TODO: why do we copy different values here?
+  if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
+    values = {s: cruise_info_copy[s] for s in [
+      "COUNTER",
+      "CHECKSUM",
+      "NEW_SIGNAL_1",
+      "MainMode_ACC",
+      "ACCMode",
+      "ZEROS_9",
+      "CRUISE_STANDSTILL",
+      "ZEROS_5",
+      "DISTANCE_SETTING",
+      "VSetDis",
+    ]}
+  else:
+    values = {s: cruise_info_copy[s] for s in [
+      "COUNTER",
+      "CHECKSUM",
+      "ACCMode",
+      "VSetDis",
+      "CRUISE_STANDSTILL",
+    ]}
   values.update({
     "ACCMode": 4,
+    "aReqRaw": 0.0,
+    "aReqValue": 0.0,
   })
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 
-def create_lfahda_cluster(packer, CAN, enabled, lat_active, lateral_paused, blinking_icon):
+def create_lfahda_cluster(packer, CAN, enabled):
   values = {
     "HDA_ICON": 1 if enabled else 0,
-    "LFA_ICON": 2 if lat_active else 3 if blinking_icon else 1 if lateral_paused else 0,
+    "LFA_ICON": 2 if enabled else 0,
   }
   return packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)
 

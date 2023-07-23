@@ -22,7 +22,8 @@ def ublox_available() -> bool:
 
 def ublox(started, params, CP: car.CarParams) -> bool:
   use_ublox = ublox_available()
-  params.put_bool("UbloxAvailable", use_ublox)
+  if use_ublox != params.get_bool("UbloxAvailable"):
+    params.put_bool("UbloxAvailable", use_ublox)
   return started and use_ublox
 
 def qcomgps(started, params, CP: car.CarParams) -> bool:
@@ -43,10 +44,10 @@ procs = [
   NativeProcess("encoderd", "system/loggerd", ["./encoderd"]),
   NativeProcess("loggerd", "system/loggerd", ["./loggerd"], onroad=False, callback=logging),
   NativeProcess("modeld", "selfdrive/modeld", ["./modeld"]),
-  NativeProcess("mapsd", "selfdrive/navd", ["./map_renderer"], enabled=False),
-  NativeProcess("navmodeld", "selfdrive/modeld", ["./navmodeld"], enabled=False),
+  NativeProcess("mapsd", "selfdrive/navd", ["./mapsd"]),
+  NativeProcess("navmodeld", "selfdrive/modeld", ["./navmodeld"]),
   NativeProcess("sensord", "system/sensord", ["./sensord"], enabled=not PC),
-  NativeProcess("ui", "selfdrive/ui", ["./ui"], offroad=True, watchdog_max_dt=(5 if not PC else None), always_watchdog=True),
+  NativeProcess("ui", "selfdrive/ui", ["./ui"], offroad=True, watchdog_max_dt=(5 if not PC else None)),
   NativeProcess("soundd", "selfdrive/ui/soundd", ["./soundd"]),
   NativeProcess("locationd", "selfdrive/locationd", ["./locationd"]),
   NativeProcess("boardd", "selfdrive/boardd", ["./boardd"], enabled=False),
@@ -69,12 +70,6 @@ procs = [
   PythonProcess("updated", "selfdrive.updated", enabled=not PC, onroad=False, offroad=True),
   PythonProcess("uploader", "system.loggerd.uploader", offroad=True),
   PythonProcess("statsd", "selfdrive.statsd", offroad=True),
-
-  PythonProcess("gpxd", "selfdrive.gpxd.gpxd"),
-  PythonProcess("gpxd_uploader", "selfdrive.gpxd.gpx_uploader", offroad=True),
-  PythonProcess("mapd", "selfdrive.mapd.mapd"),
-  PythonProcess("otisserv", "selfdrive.navd.otisserv", offroad=True),
-  PythonProcess("fleet_manager", "system.fleetmanager.fleet_manager", onroad=False, offroad=True),
 
   # debug procs
   NativeProcess("bridge", "cereal/messaging", ["./bridge"], onroad=False, callback=notcar),

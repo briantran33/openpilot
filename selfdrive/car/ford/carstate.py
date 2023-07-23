@@ -4,7 +4,7 @@ from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.ford.fordcan import CanBus
-from selfdrive.car.ford.values import DBC, CarControllerParams, BUTTON_STATES
+from selfdrive.car.ford.values import CANFD_CAR, CarControllerParams, DBC
 
 GearShifter = car.CarState.GearShifter
 TransmissionType = car.CarParams.TransmissionType
@@ -20,14 +20,8 @@ class CarState(CarStateBase):
     self.vehicle_sensors_valid = False
     self.hybrid_platform = False
 
-    self.buttonStates = BUTTON_STATES.copy()
-    self.buttonStatesPrev = BUTTON_STATES.copy()
-
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
-
-    self.prev_mads_enabled = self.mads_enabled
-    self.buttonStatesPrev = self.buttonStates.copy()
 
     # Hybrid variants experience a bug where a message from the PCM sends invalid checksums,
     # we do not support these cars at this time.
@@ -61,6 +55,10 @@ class CarState(CarStateBase):
     ret.steerFaultPermanent = cp.vl["EPAS_INFO"]["EPAS_Failure"] in (2, 3)
     # ret.espDisabled = False  # TODO: find traction control signal
 
+    if self.CP.carFingerprint in CANFD_CAR:
+      # this signal is always 0 on non-CAN FD cars
+      ret.steerFaultTemporary |= cp.vl["Lane_Assist_Data3_FD1"]["LatCtlSte_D_Stat"] not in (1, 2, 3)
+
     # cruise state
     ret.cruiseState.speed = cp.vl["EngBrakeData"]["Veh_V_DsplyCcSet"] * CV.MPH_TO_MS
     ret.cruiseState.enabled = cp.vl["EngBrakeData"]["CcStat_D_Actl"] in (4, 5)
@@ -68,6 +66,8 @@ class CarState(CarStateBase):
     ret.cruiseState.nonAdaptive = cp.vl["Cluster_Info1_FD1"]["AccEnbl_B_RqDrv"] == 0
     ret.cruiseState.standstill = cp.vl["EngBrakeData"]["AccStopMde_D_Rq"] == 3
     ret.accFaulted = cp.vl["EngBrakeData"]["CcStat_D_Actl"] in (1, 2)
+    if not self.CP.openpilotLongitudinalControl:
+      ret.accFaulted = ret.accFaulted or cp_cam.vl["ACCDATA"]["CmbbDeny_B_Actl"] == 1
 
     # gear
     if self.CP.transmissionType == TransmissionType.automatic:
@@ -85,8 +85,8 @@ class CarState(CarStateBase):
     ret.stockAeb = bool(cp_cam.vl["ACCDATA_2"]["CmbbBrkDecel_B_Rq"])
 
     # button presses
-    ret.leftBlinker = ret.leftBlinkerOn = cp.vl["Steering_Data_FD1"]["TurnLghtSwtch_D_Stat"] == 1
-    ret.rightBlinker = ret.rightBlinkerOn = cp.vl["Steering_Data_FD1"]["TurnLghtSwtch_D_Stat"] == 2
+    ret.leftBlinker = cp.vl["Steering_Data_FD1"]["TurnLghtSwtch_D_Stat"] == 1
+    ret.rightBlinker = cp.vl["Steering_Data_FD1"]["TurnLghtSwtch_D_Stat"] == 2
     # TODO: block this going to the camera otherwise it will enable stock TJA
     ret.genericToggle = bool(cp.vl["Steering_Data_FD1"]["TjaButtnOnOffPress"])
 
@@ -97,15 +97,9 @@ class CarState(CarStateBase):
 
     # blindspot sensors
     if self.CP.enableBsm:
-      ret.leftBlindspot = cp.vl["Side_Detect_L_Stat"]["SodDetctLeft_D_Stat"] != 0
-      ret.rightBlindspot = cp.vl["Side_Detect_R_Stat"]["SodDetctRight_D_Stat"] != 0
-
-    self.buttonStates["accelCruise"] = bool(cp.vl["Steering_Data_FD1"]["CcAslButtnSetIncPress"])
-    self.buttonStates["decelCruise"] = bool(cp.vl["Steering_Data_FD1"]["CcAslButtnSetDecPress"])
-    self.buttonStates["cancel"] = bool(cp.vl["Steering_Data_FD1"]["CcAslButtnCnclPress"])
-    self.buttonStates["setCruise"] = bool(cp.vl["Steering_Data_FD1"]["CcAslButtnSetPress"])
-    self.buttonStates["resumeCruise"] = bool(cp.vl["Steering_Data_FD1"]["CcAsllButtnResPress"])
-    self.buttonStates["gapAdjustCruise"] = bool(cp.vl["Steering_Data_FD1"]["AccButtnGapTogglePress"])
+      cp_bsm = cp_cam if self.CP.carFingerprint in CANFD_CAR else cp
+      ret.leftBlindspot = cp_bsm.vl["Side_Detect_L_Stat"]["SodDetctLeft_D_Stat"] != 0
+      ret.rightBlindspot = cp_bsm.vl["Side_Detect_R_Stat"]["SodDetctRight_D_Stat"] != 0
 
     # Stock steering buttons so that we can passthru blinkers etc.
     self.buttons_stock_values = cp.vl["Steering_Data_FD1"]
@@ -178,8 +172,6 @@ class CarState(CarStateBase):
       ("AccButtnGapTogglePress", "Steering_Data_FD1"),
       ("WiprFrontSwtch_D_Stat", "Steering_Data_FD1"),
       ("HeadLghtHiCtrl_D_RqAhb", "Steering_Data_FD1"),
-      ("CcAslButtnCnclPress", "Steering_Data_FD1"),
-      ("CcAsllButtnResPress", "Steering_Data_FD1"),
     ]
 
     checks = [
@@ -194,11 +186,18 @@ class CarState(CarStateBase):
       ("Cluster_Info1_FD1", 10),
       ("SteeringPinion_Data", 100),
       ("EPAS_INFO", 50),
-      ("Lane_Assist_Data3_FD1", 33),
       ("Steering_Data_FD1", 10),
       ("BodyInfo_3_FD1", 2),
       ("RCMStatusMessage2_FD1", 10),
     ]
+
+    if CP.carFingerprint in CANFD_CAR:
+      signals += [
+        ("LatCtlSte_D_Stat", "Lane_Assist_Data3_FD1"),       # PSCM lateral control status
+      ]
+      checks += [
+        ("Lane_Assist_Data3_FD1", 33),
+      ]
 
     if CP.transmissionType == TransmissionType.automatic:
       signals += [
@@ -217,7 +216,7 @@ class CarState(CarStateBase):
         ("BCM_Lamp_Stat_FD1", 1),
       ]
 
-    if CP.enableBsm:
+    if CP.enableBsm and CP.carFingerprint not in CANFD_CAR:
       signals += [
         ("SodDetctLeft_D_Stat", "Side_Detect_L_Stat"),       # Blindspot sensor, left
         ("SodDetctRight_D_Stat", "Side_Detect_R_Stat"),      # Blindspot sensor, right
@@ -233,6 +232,8 @@ class CarState(CarStateBase):
   def get_cam_can_parser(CP):
     signals = [
       # sig_name, sig_address
+      ("CmbbDeny_B_Actl", "ACCDATA"),               # ACC/AEB unavailable/lockout
+
       ("CmbbBrkDecel_B_Rq", "ACCDATA_2"),           # AEB actuation request bit
 
       ("HaDsply_No_Cs", "ACCDATA_3"),
@@ -279,9 +280,20 @@ class CarState(CarStateBase):
 
     checks = [
       # sig_address, frequency
+      ("ACCDATA", 50),
       ("ACCDATA_2", 50),
       ("ACCDATA_3", 5),
       ("IPMA_Data", 1),
     ]
+
+    if CP.enableBsm and CP.carFingerprint in CANFD_CAR:
+      signals += [
+        ("SodDetctLeft_D_Stat", "Side_Detect_L_Stat"),       # Blindspot sensor, left
+        ("SodDetctRight_D_Stat", "Side_Detect_R_Stat"),      # Blindspot sensor, right
+      ]
+      checks += [
+        ("Side_Detect_L_Stat", 5),
+        ("Side_Detect_R_Stat", 5),
+      ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus(CP).camera)

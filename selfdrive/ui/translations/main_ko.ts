@@ -64,7 +64,7 @@
     </message>
     <message>
         <source>Prevent large data uploads when on a metered connection</source>
-        <translation>데이터 요금제 연결 시 대용량 데이터 업로드 방지</translation>
+        <translation>데이터 요금제 연결 시 대용량 데이터 업로드를 방지합니다</translation>
     </message>
 </context>
 <context>
@@ -88,94 +88,6 @@
     <message>
         <source>LIMIT</source>
         <translation>LIMIT</translation>
-    </message>
-    <message>
-        <source>Lane
-only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lane
-less</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Auto
-Lane</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AutoLaneChangeTimer</name>
-    <message>
-        <source>Auto Lane Change Timer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set a timer to delay the auto lane change operation when the blinker is used. No nudge on the steering wheel is required to auto lane change if a timer is set.
-Please use caution when using this feature. Only use the blinker when traffic and road conditions permit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nudge</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nudgeless</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>BrightnessControl</name>
-    <message>
-        <source>Brightness Control (Global, %)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Manually adjusts the global brightness of the screen.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CameraOffset</name>
-    <message>
-        <source>Camera Offset (cm)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hack to trick vehicle to be left or right biased in its lane. Decreasing the value will make the car keep more left, increasing will make it keep more right. Changes take effect immediately.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ChevronInfo</name>
-    <message>
-        <source>Display Metrics above Chevron</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display useful metrics above the chevron that tracks the lead car (only applicable to cars with openpilot longitudinal control).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OFF</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Distance</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -205,22 +117,30 @@ Please use caution when using this feature. Only use the blinker when traffic an
     </message>
 </context>
 <context>
-    <name>DevUiInfo</name>
+    <name>DestinationWidget</name>
     <message>
-        <source>Developer UI List</source>
-        <translation type="unfinished"></translation>
+        <source>Home</source>
+        <translation>집</translation>
     </message>
     <message>
-        <source>Select the number of lists of real-time parameters you would like to display on the sunnypilot screen while driving.</source>
-        <translation type="unfinished"></translation>
+        <source>Work</source>
+        <translation>회사</translation>
     </message>
     <message>
-        <source>5 Metrics</source>
-        <translation type="unfinished"></translation>
+        <source>No destination set</source>
+        <translation>목적지가 설정되지 않았습니다</translation>
     </message>
     <message>
-        <source>10 Metrics</source>
-        <translation type="unfinished"></translation>
+        <source>No %1 location set</source>
+        <translation>%1 위치가 설정되지 않았습니다</translation>
+    </message>
+    <message>
+        <source>home</source>
+        <translation>집</translation>
+    </message>
+    <message>
+        <source>work</source>
+        <translation>회사</translation>
     </message>
 </context>
 <context>
@@ -247,7 +167,7 @@ Please use caution when using this feature. Only use the blinker when traffic an
     </message>
     <message>
         <source>Preview the driver facing camera to ensure that driver monitoring has good visibility. (vehicle must be off)</source>
-        <translation>운전자 모니터링이 좋은 가시성을 갖도록 운전자를 향한 카메라를 미리 봅니다. (차량연결은 해제되어있어야 합니다)</translation>
+        <translation>운전자 모니터링이 잘 되는지 확인하기 위해 카메라를 향한 운전자를 미리 봅니다. (차량연결은 해제되어있어야 합니다)</translation>
     </message>
     <message>
         <source>Reset Calibration</source>
@@ -271,7 +191,7 @@ Please use caution when using this feature. Only use the blinker when traffic an
     </message>
     <message>
         <source>Review the rules, features, and limitations of openpilot</source>
-        <translation type="vanished">openpilot의 규칙, 기능 및 제한 다시보기</translation>
+        <translation>openpilot의 규칙, 기능 및 제한 다시보기</translation>
     </message>
     <message>
         <source>Are you sure you want to review the training guide?</source>
@@ -307,11 +227,11 @@ Please use caution when using this feature. Only use the blinker when traffic an
     </message>
     <message>
         <source>openpilot requires the device to be mounted within 4° left or right and within 5° up or 8° down. openpilot is continuously calibrating, resetting is rarely required.</source>
-        <translation type="vanished">openpilot은 좌우측은 4° 이내, 위쪽은 5° 아래쪽은 8° 이내로 장치를 설치해야 합니다. openpilot은 지속적으로 보정되므로 리셋은 거의 필요하지 않습니다.</translation>
+        <translation>openpilot 장치는 좌우측 4° 이내, 위쪽 5° 아래쪽 8° 이내로 장착되어야 합니다. openpilot은 지속적으로 보정되며 재설정은 거의 필요하지 않습니다.</translation>
     </message>
     <message>
         <source> Your device is pointed %1° %2 and %3° %4.</source>
-        <translation> 사용자의 장치가 %1° %2 및 %3° %4 위치에 설치되어있습니다.</translation>
+        <translation> 사용자의 장치는 %1° %2 및 %3° %4 의 위치에 장착되어 있습니다.</translation>
     </message>
     <message>
         <source>down</source>
@@ -352,54 +272,6 @@ Please use caution when using this feature. Only use the blinker when traffic an
     <message>
         <source>Review</source>
         <translation>다시보기</translation>
-    </message>
-    <message>
-        <source>TOGGLE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable or disable PIN requirement for Fleet Manager access.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to turn off PIN requirement?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn Off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Error Troubleshoot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display error from the tmux session when an error has occurred from a system process.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset Mapbox Access Token</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to reset the Mapbox access token?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset sunnypilot Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to reset all sunnypilot settings?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Review the rules, features, and limitations of sunnypilot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>sunnypilot requires the device to be mounted within 4° left or right and within 5° up or 8° down. sunnypilot is continuously calibrating, resetting is rarely required.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -445,37 +317,6 @@ Please use caution when using this feature. Only use the blinker when traffic an
     <message>
         <source>CHILL MODE ON</source>
         <translation>안정적 모드 사용</translation>
-    </message>
-</context>
-<context>
-    <name>GapAdjustCruiseMode</name>
-    <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SW: Steering Wheel Button only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>UI: User Interface Button on screen only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SW + UI: Steering Wheel Button + User Interface Button on screen</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>S.W.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>UI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>S.W. + UI</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -541,44 +382,14 @@ Please use caution when using this feature. Only use the blinker when traffic an
     </message>
 </context>
 <context>
-    <name>MapPanel</name>
+    <name>MapSettings</name>
     <message>
-        <source>Current Destination</source>
-        <translation>현재 목적지</translation>
+        <source>NAVIGATION</source>
+        <translation>내비게이션</translation>
     </message>
     <message>
-        <source>CLEAR</source>
-        <translation>삭제</translation>
-    </message>
-    <message>
-        <source>Recent Destinations</source>
-        <translation>최근 목적지</translation>
-    </message>
-    <message>
-        <source>Try the Navigation Beta</source>
-        <translation>네비게이션(베타)를 사용해보세요</translation>
-    </message>
-    <message>
-        <source>Get turn-by-turn directions displayed and more with a comma
-prime subscription. Sign up now: https://connect.comma.ai</source>
-        <translation>자세한 경로안내를 원하시면 comma prime을 구독하세요.
-등록：https://connect.comma.ai</translation>
-    </message>
-    <message>
-        <source>No home
-location set</source>
-        <translation>집
-설정되지않음</translation>
-    </message>
-    <message>
-        <source>No work
-location set</source>
-        <translation>회사
-설정되지않음</translation>
-    </message>
-    <message>
-        <source>no recent destinations</source>
-        <translation>최근 목적지 없음</translation>
+        <source>Manage at connect.comma.ai</source>
+        <translation>connect.comma.ai에서 관리됩니다</translation>
     </message>
 </context>
 <context>
@@ -589,37 +400,10 @@ location set</source>
     </message>
     <message>
         <source>Waiting for GPS</source>
-        <translation>GPS 수신중 입니다</translation>
-    </message>
-</context>
-<context>
-    <name>MaxTimeOffroad</name>
-    <message>
-        <source>Max Time Offroad</source>
-        <translation type="unfinished"></translation>
+        <translation>GPS 수신중</translation>
     </message>
     <message>
-        <source>Device is automatically turned off after a set time when the engine is turned off (off-road) after driving (on-road).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>m</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>h</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always On</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Immediate</source>
+        <source>Waiting for route</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -646,11 +430,68 @@ location set</source>
     </message>
     <message>
         <source>for &quot;%1&quot;</source>
-        <translation>&quot;%1&quot;에 접속하려면 인증이 필요합니다</translation>
+        <translation>&quot;%1&quot;에 접속하려면 비밀번호가 필요합니다</translation>
     </message>
     <message>
         <source>Wrong password</source>
         <translation>비밀번호가 틀렸습니다</translation>
+    </message>
+</context>
+<context>
+    <name>OffroadAlert</name>
+    <message>
+        <source>Immediately connect to the internet to check for updates. If you do not connect to the internet, openpilot won&apos;t engage in %1</source>
+        <translation>즉시 인터넷에 연결하여 업데이트를 확인하세요. 인터넷에 연결되어 있지 않으면 %1 이후에는 openpilot이 활성화되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Connect to internet to check for updates. openpilot won&apos;t automatically start until it connects to internet to check for updates.</source>
+        <translation>업데이트를 확인하려면 인터넷에 연결하세요. openpilot은 업데이트를 확인하기 위해 인터넷에 연결할 때까지 자동으로 시작되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Unable to download updates
+%1</source>
+        <translation>업데이트를 다운로드할수 없습니다
+%1</translation>
+    </message>
+    <message>
+        <source>Invalid date and time settings, system won&apos;t start. Connect to internet to set time.</source>
+        <translation>날짜 및 시간 설정이 잘못되어 시스템이 시작되지 않습니다. 날짜와 시간을 동기화하려면 인터넷에 연결하세요.</translation>
+    </message>
+    <message>
+        <source>Taking camera snapshots. System won&apos;t start until finished.</source>
+        <translation>카메라 스냅샷 찍기가 완료될 때까지 시스템이 시작되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>An update to your device&apos;s operating system is downloading in the background. You will be prompted to update when it&apos;s ready to install.</source>
+        <translation>백그라운드에서 운영 체제에 대한 업데이트가 다운로드되고 있습니다. 설치준비가 완료되면 업데이트하라는 메시지가 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Device failed to register. It will not connect to or upload to comma.ai servers, and receives no support from comma.ai. If this is an official device, visit https://comma.ai/support.</source>
+        <translation>장치를 등록하지 못했습니다. comma.ai 서버에 연결하거나 업로드하지 않으며 comma.ai에서 지원을 받지 않습니다. 공식 장치인경우 https://comma.ai/support 에 방문하여 문의하세요.</translation>
+    </message>
+    <message>
+        <source>NVMe drive not mounted.</source>
+        <translation>NVMe 드라이브가 마운트되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Unsupported NVMe drive detected. Device may draw significantly more power and overheat due to the unsupported NVMe.</source>
+        <translation>지원되지 않는 NVMe 드라이브가 감지되었습니다. 지원되지 않는 NVMe 드라이브로 인해 장치가 훨씬 더 많은 전력을 소비하고 과열될 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>openpilot was unable to identify your car. Your car is either unsupported or its ECUs are not recognized. Please submit a pull request to add the firmware versions to the proper vehicle. Need help? Join discord.comma.ai.</source>
+        <translation>opepilot이 차량을 식별할수 없었습니다. 지원되지 않는 차량이거나 ECU가 인식되지 않습니다. 해당 차량에 펌웨어 버전을 추가하려면 PR을 제출하세요. 도움이 필요하시면 discord.comma.ai에 가입하세요.</translation>
+    </message>
+    <message>
+        <source>openpilot was unable to identify your car. Check integrity of cables and ensure all connections are secure, particularly that the comma power is fully inserted in the OBD-II port of the vehicle. Need help? Join discord.comma.ai.</source>
+        <translation>openpilot이 차량을 식별할수 없었습니다. 케이블의 무결성을 점검하고 모든 연결부, 특히 comma power가 차량의 OBD-II 포트에 완전히 삽입되었는지 확인하세요. 도움이 필요하시면 discord.comma.ai에 가입하세요.</translation>
+    </message>
+    <message>
+        <source>openpilot detected a change in the device&apos;s mounting position. Ensure the device is fully seated in the mount and the mount is firmly secured to the windshield.</source>
+        <translation>openpilot 장치의 장착 위치 변경을 감지했습니다. 장치가 마운트에 완전히 장착되고 마운트가 앞유리에 단단히 고정되었는지 확인하세요. </translation>
+    </message>
+    <message>
+        <source>Device temperature too high. System cooling down before starting. Current internal component temperature: %1</source>
+        <translation>장치 온도가 너무 높습니다. 시작하기 전에 장치온도를 낮춰주세요. 현재 내부 구성 요소 온도: %1</translation>
     </message>
 </context>
 <context>
@@ -669,44 +510,10 @@ location set</source>
     </message>
 </context>
 <context>
-    <name>OnroadScreenOff</name>
-    <message>
-        <source>Driving Screen Off Timer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off the device screen or reduce brightness to protect the screen after driving starts. It automatically brightens or turns on when a touch or event occurs.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always On</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>OnroadScreenOffBrightness</name>
-    <message>
-        <source>Driving Screen Off Brightness (%)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>When using the Driving Screen Off feature, the brightness is reduced according to the automatic brightness ratio.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PairingPopup</name>
     <message>
         <source>Pair your device to your comma account</source>
-        <translation>장치를 콤마 계정과 페어링합니다</translation>
+        <translation>장치를 comma 계정과 페어링합니다</translation>
     </message>
     <message>
         <source>Go to https://connect.comma.ai on your phone</source>
@@ -718,7 +525,7 @@ location set</source>
     </message>
     <message>
         <source>Bookmark connect.comma.ai to your home screen to use it like an app</source>
-        <translation>connect.comma.ai을 앱처럼 사용하려면 홈 화면에 바로가기를 만드십시오</translation>
+        <translation>connect.comma.ai를 앱처럼 사용하려면 홈 화면에 바로가기를 만드세요.</translation>
     </message>
 </context>
 <context>
@@ -733,25 +540,14 @@ location set</source>
     </message>
 </context>
 <context>
-    <name>PathOffset</name>
-    <message>
-        <source>Path Offset (cm)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hack to trick the model path to be left or right biased of the lane. Decreasing the value will shift the model more left, increasing will shift the model more right. Changes take effect immediately.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PrimeAdWidget</name>
     <message>
         <source>Upgrade Now</source>
-        <translation>지금 업그레이드</translation>
+        <translation>지금 업그레이드 하세요</translation>
     </message>
     <message>
         <source>Become a comma prime member at connect.comma.ai</source>
-        <translation>connect.comma.ai 접속 comma prime 가입</translation>
+        <translation>connect.comma.ai에 접속하여 comma prime 회원이 되세요</translation>
     </message>
     <message>
         <source>PRIME FEATURES:</source>
@@ -762,12 +558,16 @@ location set</source>
         <translation>원격 접속</translation>
     </message>
     <message>
-        <source>1 year of storage</source>
-        <translation>1년간 저장</translation>
+        <source>24/7 LTE connectivity</source>
+        <translation>항상 LTE 연결</translation>
     </message>
     <message>
-        <source>Developer perks</source>
-        <translation>개발자 혜택</translation>
+        <source>Turn-by-turn navigation</source>
+        <translation>내비게이션 경로안내</translation>
+    </message>
+    <message>
+        <source>1 year of drive storage</source>
+        <translation>1년간 저장</translation>
     </message>
 </context>
 <context>
@@ -797,7 +597,7 @@ location set</source>
     </message>
     <message>
         <source>openpilot</source>
-        <translation type="vanished">openpilot</translation>
+        <translation>openpilot</translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s) ago</source>
@@ -816,10 +616,6 @@ location set</source>
         <translation>
             <numerusform>%n 일전</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>sunnypilot</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -850,7 +646,7 @@ location set</source>
     </message>
     <message>
         <source>Unable to mount data partition. Partition may be corrupted. Press confirm to erase and reset your device.</source>
-        <translation>데이터 파티션을 마운트할 수 없습니다. 파티션이 손상되었을 수 있습니다. 장치를 초기화하려면 확인을 누르세요.</translation>
+        <translation>데이터 파티션을 마운트할 수 없습니다. 파티션이 손상되었을 수 있습니다. 모든 내용을 지우고 장치를 초기화하려면 확인을 누르세요.</translation>
     </message>
     <message>
         <source>Press confirm to erase all content and settings. Press cancel to resume boot.</source>
@@ -859,402 +655,8 @@ location set</source>
     <message>
         <source>Resetting device...
 This may take up to a minute.</source>
-        <translation>장치 초기화 중...
+        <translation>장치를 초기화하는 중...
 최대 1분이 소요될 수 있습니다.</translation>
-    </message>
-</context>
-<context>
-    <name>SPControlsPanel</name>
-    <message>
-        <source>Enable M.A.D.S.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable the beloved M.A.D.S. feature. Disable toggle to revert back to stock openpilot engagement/disengagement.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disengage ALC On Brake Pedal ℹ</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Define brake pedal interactions with sunnypilot when M.A.D.S. is enabled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled: Pressing the brake pedal will disengage Automatic Lane Centering (ALC) on sunnypilot.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disabled: Pressing the brake pedal will &lt;b&gt;NOT&lt;/b&gt; disengage Automatic Lane Centering (ALC) on sunnypilot.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable ACC+MADS with RES+/SET-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Engage both M.A.D.S. and ACC with a single press of RES+ or SET- button.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Note: Once M.A.D.S. is engaged via this mode, it will remain engaged until it is manually disabled via the M.A.D.S. button or car shut off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Toggle M.A.D.S. with Cruise Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Allows M.A.D.S. engagement/disengagement with &quot;Cruise Main&quot; cruise control button from the steering wheel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pause Lateral Below Speed w/ Blinker</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this toggle to pause lateral actuation with blinker when traveling below 30 MPH or 50 KM/H.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Block Lane Change: Road Edge Detection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this toggle to block lane change when road edge is detected on the stalk actuated side.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Dynamic Lane Profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable toggle to use Dynamic Lane Profile. Disable toggle to use Laneless only.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Laneless for Curves in &quot;Auto lane&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>While in Auto Lane, switch to Laneless for current/future curves.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom Offsets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add custom offsets to Camera and Path in sunnypilot.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Auto Lane Change: Delay with Blind Spot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Toggle to enable a delay timer for seamless lane changes when blind spot monitoring (BSM) detects a obstructing vehicle, ensuring safe maneuvering.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Gap Adjust Cruise ℹ</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable the Interval button on the steering wheel to adjust the cruise gap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Only available to cars with openpilot Longitudinal Control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enforce Torque Lateral Control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this to enforce sunnypilot to steer with Torque lateral control.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Torque Lateral Control Live Tune</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enables live tune for Torque lateral control.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Torque Lateral Controller Self-Tune</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enables self-tune for Torque lateral control.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Hands on Wheel Monitoring</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Monitor and alert when driver is not keeping the hands on the steering wheel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Vision Based Turn Speed Control (V-TSC)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Use vision path predictions to estimate the appropriate speed to drive through turns ahead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Speed Limit Control (SLC)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Use speed limit signs information from map data and car interface (if applicable) to automatically adapt cruise speed to road limits.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Speed Limit Offset</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set speed limit slightly higher than actual speed limit for a more natural drive.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Map Data Turn Speed Control (M-TSC)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Use curvature information from map data to define speed limits to take turns ahead.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>ACC +/-: Long Press Reverse</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change the ACC +/- buttons behavior with cruise speed change in sunnypilot.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disabled (Stock): Short=1, Long = 5 (imperial) / 10 (metric)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled: Short = 5 (imperial) / 10 (metric), Long=1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OSM: Use Offline Database</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>You must restart your car or your device to apply these changes.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SPGeneralPanel</name>
-    <message>
-        <source>Quiet Drive 🤫</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>sunnypilot will display alerts but only play the most important warning sounds. This feature can be toggled while the car is on.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Green Traffic Light Chime (Beta)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A chime will play when the traffic light you are waiting for turns green and you have no vehicle in front of you. If you are waiting behind another vehicle, the chime will play once the vehicle advances unless ACC is engaged.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Note: This chime is only designed as a notification. It is the driver&apos;s responsibility to observe their environment and make decisions accordingly.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead Vehicle Departure Alert</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this will notify when the leading vehicle drives away.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Retain hotspot/tethering state</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabling this toggle will retain the hotspot/tethering toggle state across reboots.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Driving Screen Off: Non-Critical Events</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>When &lt;b&gt;Driving Screen Off Timer&lt;/b&gt; is not set to &lt;b&gt;&quot;Always On&quot;&lt;/b&gt;:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enabled: Wake the brightness of the screen to display all events.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disabled: Wake the brightness of the screen to display critical events.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Screen Recorder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this will display a button on the onroad screen to toggle on or off real-time screen recording with UI elements.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disable Onroad Uploads</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disable uploads completely when onroad. Necessary to avoid high data usage when connected to Wi-Fi hotspot. Turn on this feature if you are looking to utilize map-based features, such as Speed Limit Control (SLC) and Map-based Turn Speed Control (MTSC).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug snapshot on screen center tap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stores snapshot file with current state of some modules.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SPVehiclesTogglesPanel</name>
-    <message>
-        <source>Hyundai/Kia/Genesis</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Toyota/Lexus</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Allow M.A.D.S. toggling w/ LKAS Button (Beta)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Allows M.A.D.S. engagement/disengagement with &quot;LKAS&quot; button from the steering wheel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Note: Enabling this toggle may have unexpected behavior with steering control. It is the driver&apos;s responsibility to observe their environment and make decisions accordingly.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SPVisualsPanel</name>
-    <message>
-        <source>Display Braking Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this will turn the current speed value to red while the brake is used.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display Stand Still Timer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this will display time spent at a stop (i.e., at a stop lights, stop signs, traffic congestions).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show Developer UI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show developer UI (Dev UI) for real-time parameters from various sources.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Auto-Hide UI Buttons</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide UI buttons on driving screen after a 30-second timeout. Tap on the screen at anytime to reveal the UI buttons.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display DM Camera in Reverse Gear</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show Driver Monitoring camera while the car is in reverse gear.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OSM: Show debug UI elements</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OSM: Show UI elements that aid debugging.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Mapbox Navigation*</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable built-in navigation on sunnypilot, powered by Mapbox.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Access via the web interface: &quot;http://&lt;device_ip&gt;:8082&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>If you do not have comma Prime, you will need to provide your own Mapbox token at https://mapbox.com/. Reach out to sunnyhaibin#0865 on Discord for more information.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Huge thanks to the dragonpilot team for making this possible!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speedometer: Display True Speed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display the true vehicle current speed from wheel speed sensors.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speedometer: Hide from Onroad Screen</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display End-to-end Longitudinal Status (Beta)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable this will display an icon that appears when the End-to-end model decides to start or stop.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&quot;Enable Mapbox Navigation&quot;
-You must restart your car or your device to apply these changes.
-Reboot now?</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1278,26 +680,6 @@ Reboot now?</source>
     <message>
         <source>Software</source>
         <translation>소프트웨어</translation>
-    </message>
-    <message>
-        <source>Navigation</source>
-        <translation>네비게이션</translation>
-    </message>
-    <message>
-        <source>SP - General</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SP - Controls</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SP - Vehicles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>SP - Visuals</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1340,7 +722,7 @@ Reboot now?</source>
     </message>
     <message>
         <source>Waiting for internet</source>
-        <translation>네트워크 접속을 기다립니다</translation>
+        <translation>인터넷 대기중</translation>
     </message>
     <message>
         <source>Enter URL</source>
@@ -1348,7 +730,7 @@ Reboot now?</source>
     </message>
     <message>
         <source>for Custom Software</source>
-        <translation>for Custom Software</translation>
+        <translation>커스텀 소프트웨어</translation>
     </message>
     <message>
         <source>Downloading...</source>
@@ -1360,7 +742,7 @@ Reboot now?</source>
     </message>
     <message>
         <source>Ensure the entered URL is valid, and the device’s internet connection is good.</source>
-        <translation>입력된 URL이 유효하고 장치의 네트워크 연결이 잘 되어 있는지 확인하세요.</translation>
+        <translation>입력된 URL이 유효하고 장치의 인터넷 연결이 양호한지 확인하세요.</translation>
     </message>
     <message>
         <source>Reboot device</source>
@@ -1387,7 +769,7 @@ Reboot now?</source>
     </message>
     <message>
         <source>Pair your device with comma connect (connect.comma.ai) and claim your comma prime offer.</source>
-        <translation>장치를 (connect.comma.ai)에서 페어링하고 comma prime 오퍼를 청구합니다.</translation>
+        <translation>장치를 comma connect (connect.comma.ai)에서 페어링하고 comma prime 제안을 요청하세요.</translation>
     </message>
     <message>
         <source>Pair device</source>
@@ -1454,11 +836,11 @@ Reboot now?</source>
     </message>
     <message>
         <source>Wi-Fi</source>
-        <translation>Wi-Fi</translation>
+        <translation>wifi</translation>
     </message>
     <message>
         <source>ETH</source>
-        <translation>이더넷</translation>
+        <translation>LAN</translation>
     </message>
     <message>
         <source>2G</source>
@@ -1475,37 +857,6 @@ Reboot now?</source>
     <message>
         <source>5G</source>
         <translation>5G</translation>
-    </message>
-</context>
-<context>
-    <name>SidebarTemp</name>
-    <message>
-        <source>Display Temperature on Sidebar</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Display Ambient temperature, memory temperature, CPU core with the highest temperature, GPU temperature, or max of Memory/CPU/GPU on the sidebar.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ambient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Memory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>CPU</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>GPU</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Max</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1568,7 +919,7 @@ Reboot now?</source>
     </message>
     <message>
         <source>up to date, last checked %1</source>
-        <translation>최신 상태, 마지막으로 확인 %1</translation>
+        <translation>최신 상태 입니다, %1에 마지막으로 확인</translation>
     </message>
     <message>
         <source>DOWNLOAD</source>
@@ -1581,89 +932,6 @@ Reboot now?</source>
     <message>
         <source>never</source>
         <translation>업데이트 안함</translation>
-    </message>
-    <message>
-        <source>Current Driving Model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Database updates can be downloaded while the car is off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OpenStreetMap Database Update</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to reboot and perform a database update?
-Estimated time: 30-90 minutes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reboot</source>
-        <translation type="unfinished">재부팅</translation>
-    </message>
-    <message>
-        <source>OpenStreetMap Database</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select your location</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to reboot to start downloading the selected database? Estimated time: 30-90 minutes</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SpeedLimitOffsetType</name>
-    <message>
-        <source>Speed Limit Offset Type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set speed limit higher or lower than actual speed limit for a more personalized drive.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>To use this feature, turn off &quot;Enable Speed Limit % Offset&quot;.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Default</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Value</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SpeedLimitStyle</name>
-    <message>
-        <source>Speed Limit Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>MUTCD: US/Canada</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vienna: Europe/Asia/etc.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>MUTCD</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vienna</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1694,7 +962,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>Username &apos;%1&apos; has no keys on GitHub</source>
-        <translation>&apos;%1&apos;의 키가 GitHub에 없습니다</translation>
+        <translation>사용자 &apos;%1&apos;의 키가 GitHub에 없습니다</translation>
     </message>
     <message>
         <source>Request timed out</source>
@@ -1702,7 +970,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>Username &apos;%1&apos; doesn&apos;t exist on GitHub</source>
-        <translation>&apos;%1&apos;은 GitHub에 없습니다</translation>
+        <translation>사용자 &apos;%1&apos;는 GitHub에 없습니다</translation>
     </message>
 </context>
 <context>
@@ -1724,7 +992,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>Scroll to accept</source>
-        <translation>허용하려면 아래로 스크롤하세요</translation>
+        <translation>동의하려면 아래로 스크롤하세요</translation>
     </message>
     <message>
         <source>Agree</source>
@@ -1735,11 +1003,11 @@ Estimated time: 30-90 minutes</source>
     <name>TogglesPanel</name>
     <message>
         <source>Enable openpilot</source>
-        <translation type="vanished">openpilot 사용</translation>
+        <translation>openpilot 사용</translation>
     </message>
     <message>
         <source>Use the openpilot system for adaptive cruise control and lane keep driver assistance. Your attention is required at all times to use this feature. Changing this setting takes effect when the car is powered off.</source>
-        <translation type="vanished">어댑티브 크루즈 컨트롤 및 차선 유지 운전자 보조를 위해 openpilot 시스템을 사용하십시오. 이 기능을 사용하려면 항상 주의를 기울여야 합니다. 설정변경은 장치 재부팅후 적용됩니다.</translation>
+        <translation>어댑티브 크루즈 컨트롤 및 차선 유지 운전자 보조를 위해 openpilot 시스템을 사용하십시오. 이 기능을 사용하려면 항상 주의를 기울여야 합니다. 설정변경은 장치 재부팅후 적용됩니다.</translation>
     </message>
     <message>
         <source>Enable Lane Departure Warnings</source>
@@ -1747,7 +1015,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>Receive alerts to steer back into the lane when your vehicle drifts over a detected lane line without a turn signal activated while driving over 31 mph (50 km/h).</source>
-        <translation>차량이 50km/h(31mph) 이상의 속도로 주행하는 동안 방향지시등 없이 감지된 차선 위를 주행할 경우 차선이탈 경고를 표시합니다.</translation>
+        <translation>차량이 50km/h(31mph) 이상의 속도로 주행하는 동안 방향지시등이 켜지지 않은 상태에서 차량이 감지된 차선을 벗어나면 차선이탈 경고를 합니다.</translation>
     </message>
     <message>
         <source>Use Metric System</source>
@@ -1771,7 +1039,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>When enabled, pressing the accelerator pedal will disengage openpilot.</source>
-        <translation>활성화된 경우 가속 페달을 누르면 openpilot이 해제됩니다.</translation>
+        <translation>활성화된 경우 가속 페달을 밟으면 openpilot이 해제됩니다.</translation>
     </message>
     <message>
         <source>Show ETA in 24h Format</source>
@@ -1819,11 +1087,7 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>openpilot longitudinal control may come in a future update.</source>
-        <translation>오픈파일럿 롱컨트롤은 향후 업데이트에서 제공될 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Enable experimental longitudinal control to allow Experimental mode.</source>
-        <translation>실험적 롱컨트롤을 사용하려면 실험적 모드를 활성화 하세요.</translation>
+        <translation>openpilot 롱컨트롤은 향후 업데이트에서 제공될 수 있습니다.</translation>
     </message>
     <message>
         <source>openpilot Longitudinal Control (Alpha)</source>
@@ -1835,15 +1099,15 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>On this car, openpilot defaults to the car&apos;s built-in ACC instead of openpilot&apos;s longitudinal control. Enable this to switch to openpilot longitudinal control. Enabling Experimental mode is recommended when enabling openpilot longitudinal control alpha.</source>
-        <translation>이 차량은 openpilot 롱컨트롤 대신 차량의 내장 ACC로 기본 설정됩니다. openpilot 롱컨트롤으로 전환하려면 이 기능을 활성화하세요. openpilot 롱컨트롤 알파를 활성화하는경우 실험적 모드 활성화를 권장합니다.</translation>
+        <translation>이 차량은 openpilot 롱컨트롤 대신 차량의 ACC로 기본 설정됩니다. openpilot 롱컨트롤으로 전환하려면 이 기능을 활성화하세요. openpilot 롱컨트롤 알파를 활성화하는경우 실험적 모드 활성화를 권장합니다.</translation>
     </message>
     <message>
         <source>Aggressive</source>
-        <translation type="vanished">공격적</translation>
+        <translation>공격적</translation>
     </message>
     <message>
         <source>Standard</source>
-        <translation type="vanished">표준</translation>
+        <translation>표준</translation>
     </message>
     <message>
         <source>Relaxed</source>
@@ -1855,66 +1119,23 @@ Estimated time: 30-90 minutes</source>
     </message>
     <message>
         <source>Standard is recommended. In aggressive mode, openpilot will follow lead cars closer and be more aggressive with the gas and brake. In relaxed mode openpilot will stay further away from lead cars.</source>
-        <translation type="vanished">표준 모드를 권장합니다. 공격적 모드에서는 openpilot은 앞차를 더 가까이 따라가며 가속과 감속을 더 공격적으로 사용합니다. 편안한 모드에서 openpilot은 선두 차량에서 더 멀리 떨어져 있습니다.</translation>
+        <translation>표준 모드를 권장합니다. 공격적 모드에서는 openpilot은 앞차를 더 가까이 따라가며 가속과 감속을 더 공격적으로 사용합니다. 편안한 모드에서 openpilot은 선두 차량에서 더 멀리 떨어져 있습니다.</translation>
     </message>
     <message>
         <source>An alpha version of openpilot longitudinal control can be tested, along with Experimental mode, on non-release branches.</source>
-        <translation type="unfinished"></translation>
+        <translation>openpilot 롱컨트롤 알파 버전은 비 릴리스 분기에서 실험적 모드와 함께 테스트할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Enable sunnypilot</source>
-        <translation type="unfinished"></translation>
+        <source>Navigate on openpilot</source>
+        <translation>Navigate on openpilot (NOO)</translation>
     </message>
     <message>
-        <source>Use the sunnypilot system for adaptive cruise control and lane keep driver assistance. Your attention is required at all times to use this feature. Changing this setting takes effect when the car is powered off.</source>
-        <translation type="unfinished"></translation>
+        <source>When navigation has a destination, openpilot will input the map information into the model. This generally improves behavior and allows openpilot to keep left or right appropriately at forks/exits and take turns. Lane change behavior is unchanged and still activated by the driver. This is an alpha quality feature; mistakes should be expected.</source>
+        <translation>내비게이션에 목적지가 있으면 openpilot이 경로 정보를 모델에 입력합니다. 이것은 일반적으로 동작을 개선하고 openpilot이 분기점에서 적절하게 왼쪽 또는 오른쪽을 유지하고 회전할 수 있도록 합니다. 차선 변경 동작은 변경되지 않았으며 여전히 운전자에 의해 활성화됩니다. 이것은 알파 상태의 기능이니 사용에 주의해야 합니다.</translation>
     </message>
     <message>
-        <source>Custom Stock Longitudinal Control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>When enabled, sunnypilot will attempt to control stock longitudinal control with ACC button presses.
-This feature must be used along with SLC, and/or V-TSC, and/or M-TSC.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maniac</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Aggro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stock</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stock is recommended. In aggressive/maniac mode, openpilot will follow lead cars closer and be more aggressive with the gas and brake. In relaxed mode openpilot will stay further away from lead cars.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>TorqueFriction</name>
-    <message>
-        <source>FRICTION</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Adjust Friction for the Torque Lateral Controller</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>TorqueMaxLatAccel</name>
-    <message>
-        <source>LAT_ACCEL_FACTOR</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Adjust Max Lateral Acceleration for the Torque Lateral Controller</source>
-        <translation type="unfinished"></translation>
+        <source>Enable the openpilot longitudinal control (alpha) toggle to allow Experimental mode.</source>
+        <translation>openpilot E2E 롱컨트롤 (알파) 토글을 활성화하여 실험적 모드를 허용합니다.</translation>
     </message>
 </context>
 <context>
@@ -1956,11 +1177,11 @@ This feature must be used along with SLC, and/or V-TSC, and/or M-TSC.</source>
     <name>WiFiPromptWidget</name>
     <message>
         <source>Setup Wi-Fi</source>
-        <translation>Wi-Fi 설정</translation>
+        <translation>wifi 설정</translation>
     </message>
     <message>
         <source>Connect to Wi-Fi to upload driving data and help improve openpilot</source>
-        <translation>Wi-Fi에 연결하여 주행 데이터를 업로드하고 openpilot 개선에 참여하세요.</translation>
+        <translation>wifi에 연결하여 주행 데이터를 업로드하고 openpilot 개선에 참여하세요.</translation>
     </message>
     <message>
         <source>Open Settings</source>
@@ -1991,7 +1212,7 @@ This feature must be used along with SLC, and/or V-TSC, and/or M-TSC.</source>
     </message>
     <message>
         <source>Forget Wi-Fi Network &quot;%1&quot;?</source>
-        <translation>wifi 네트워크 저장안함 &quot;%1&quot;?</translation>
+        <translation>&quot;%1&quot;를 저장하지 않겠습니까?</translation>
     </message>
     <message>
         <source>Forget</source>

@@ -7,7 +7,7 @@ from common.numpy_fast import clip
 from system.swaglog import cloudlog
 # WARNING: imports outside of constants will not trigger a rebuild
 from selfdrive.modeld.constants import index_function
-from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
+from selfdrive.controls.radard import _LEAD_ACCEL_TAU
 
 if __name__ == '__main__':  # generating code
   from third_party.acados.acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
@@ -57,54 +57,26 @@ MAX_ACCEL = 2.0
 COMFORT_BRAKE = 2.5
 STOP_DISTANCE = 6.0
 
-def get_jerk_factor(personality=log.LongitudinalPersonality.standard, personality_mode="stock"):
-  if personality_mode == "stock":
-    if personality==log.LongitudinalPersonality.relaxed:
-      return 1.0
-    elif personality==log.LongitudinalPersonality.standard:
-      return 1.0
-    elif personality==log.LongitudinalPersonality.moderate:
-      return 0.5
-    elif personality==log.LongitudinalPersonality.aggressive:
-      return 0.222
-    else:
-      raise NotImplementedError("Longitudinal personality not supported")
-  elif personality_mode == "gac":
-    if personality == log.LongitudinalPersonality.standard:
-      return 1.0
-    elif personality == log.LongitudinalPersonality.moderate:
-      return 0.5
-    elif personality == log.LongitudinalPersonality.aggressive:
-      return 0.222
-    else:
-      raise NotImplementedError("Longitudinal personality not supported")
+def get_jerk_factor(personality=log.LongitudinalPersonality.standard):
+  if personality==log.LongitudinalPersonality.relaxed:
+    return 1.0
+  elif personality==log.LongitudinalPersonality.standard:
+    return 1.0
+  elif personality==log.LongitudinalPersonality.aggressive:
+    return 0.5
   else:
-    raise NotImplementedError("Longitudinal personality mode not supported")
+    raise NotImplementedError("Longitudinal personality not supported")
 
 
-def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard, personality_mode="stock"):
-  if personality_mode == "stock":
-    if personality==log.LongitudinalPersonality.relaxed:
-      return 1.75
-    elif personality==log.LongitudinalPersonality.standard:
-      return 1.45
-    elif personality==log.LongitudinalPersonality.moderate:
-      return 1.25
-    elif personality==log.LongitudinalPersonality.aggressive:
-      return 1.0
-    else:
-      raise NotImplementedError("Longitudinal personality not supported")
-  elif personality_mode == "gac":
-    if personality == log.LongitudinalPersonality.standard:
-      return 1.45
-    elif personality == log.LongitudinalPersonality.moderate:
-      return 1.25
-    elif personality == log.LongitudinalPersonality.aggressive:
-      return 1.0
-    else:
-      raise NotImplementedError("Longitudinal personality not supported")
+def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
+  if personality==log.LongitudinalPersonality.relaxed:
+    return 1.75
+  elif personality==log.LongitudinalPersonality.standard:
+    return 1.45
+  elif personality==log.LongitudinalPersonality.aggressive:
+    return 1.25
   else:
-    raise NotImplementedError("Longitudinal personality mode not supported")
+    raise NotImplementedError("Longitudinal personality not supported")
 
 def get_stopped_equivalence_factor(v_lead):
   return (v_lead**2) / (2 * COMFORT_BRAKE)
@@ -250,11 +222,8 @@ class LongitudinalMpc:
   def __init__(self, mode='acc'):
     self.mode = mode
     self.solver = AcadosOcpSolverCython(MODEL_NAME, ACADOS_SOLVER_TYPE, N)
-    self.desired_TF = get_T_FOLLOW()
     self.reset()
     self.source = SOURCES[2]
-
-    self.e2e_x = np.zeros(13, dtype=np.float64)
 
   def reset(self):
     # self.solver = AcadosOcpSolverCython(MODEL_NAME, ACADOS_SOLVER_TYPE, N)
@@ -301,8 +270,8 @@ class LongitudinalMpc:
     for i in range(N):
       self.solver.cost_set(i, 'Zl', Zl)
 
-  def set_weights(self, prev_accel_constraint=True, personality=log.LongitudinalPersonality.standard, personality_mode="stock"):
-    jerk_factor = get_jerk_factor(personality, personality_mode=personality_mode)
+  def set_weights(self, prev_accel_constraint=True, personality=log.LongitudinalPersonality.standard):
+    jerk_factor = get_jerk_factor(personality)
     if self.mode == 'acc':
       a_change_cost = A_CHANGE_COST if prev_accel_constraint else 0
       cost_weights = [X_EGO_OBSTACLE_COST, X_EGO_COST, V_EGO_COST, A_EGO_COST, jerk_factor * a_change_cost, jerk_factor * J_EGO_COST]
@@ -360,8 +329,8 @@ class LongitudinalMpc:
     self.cruise_min_a = min_a
     self.max_a = max_a
 
-  def update(self, radarstate, v_cruise, x, v, a, j, personality=log.LongitudinalPersonality.standard, personality_mode="stock"):
-    self.desired_TF = get_T_FOLLOW(personality, personality_mode)
+  def update(self, radarstate, v_cruise, x, v, a, j, personality=log.LongitudinalPersonality.standard):
+    t_follow = get_T_FOLLOW(personality)
     v_ego = self.x0[1]
     self.status = radarstate.leadOne.status or radarstate.leadTwo.status
 
@@ -373,13 +342,6 @@ class LongitudinalMpc:
     # and then treat that as a stopped car/obstacle at this new distance.
     lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
     lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
-
-    cruise_target_e2ex = T_IDXS * np.clip(v_cruise, v_ego - 2.0, 1e3) + x[0]
-    e2e_xforward = ((v[1:] + v[:-1]) / 2) * (T_IDXS[1:] - T_IDXS[:-1])
-    e2e_x = np.cumsum(np.insert(e2e_xforward, 0, x[0]))
-
-    x_and_cruise_e2ex = np.column_stack([e2e_x, cruise_target_e2ex])
-    e2e_x = np.min(x_and_cruise_e2ex, axis=1)
 
     self.params[:,0] = MIN_ACCEL
     self.params[:,1] = self.max_a
@@ -395,7 +357,7 @@ class LongitudinalMpc:
       v_cruise_clipped = np.clip(v_cruise * np.ones(N+1),
                                  v_lower,
                                  v_upper)
-      cruise_obstacle = np.cumsum(T_DIFFS * v_cruise_clipped) + get_safe_obstacle_distance(v_cruise_clipped, self.desired_TF)
+      cruise_obstacle = np.cumsum(T_DIFFS * v_cruise_clipped) + get_safe_obstacle_distance(v_cruise_clipped, t_follow)
       x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle])
       self.source = SOURCES[np.argmin(x_obstacles[0])]
 
@@ -419,8 +381,6 @@ class LongitudinalMpc:
     else:
       raise NotImplementedError(f'Planner mode {self.mode} not recognized in planner update')
 
-    self.e2e_x = e2e_x[:]
-
     self.yref[:,1] = x
     self.yref[:,2] = v
     self.yref[:,3] = a
@@ -431,7 +391,7 @@ class LongitudinalMpc:
 
     self.params[:,2] = np.min(x_obstacles, axis=1)
     self.params[:,3] = np.copy(self.prev_a)
-    self.params[:,4] = self.desired_TF
+    self.params[:,4] = t_follow
 
     self.run()
     if (np.any(lead_xv_0[FCW_IDXS,0] - self.x_sol[FCW_IDXS,0] < CRASH_DISTANCE) and
@@ -443,9 +403,9 @@ class LongitudinalMpc:
     # Check if it got within lead comfort range
     # TODO This should be done cleaner
     if self.mode == 'blended':
-      if any((lead_0_obstacle - get_safe_obstacle_distance(self.x_sol[:,1], self.desired_TF))- self.x_sol[:,0] < 0.0):
+      if any((lead_0_obstacle - get_safe_obstacle_distance(self.x_sol[:,1], t_follow))- self.x_sol[:,0] < 0.0):
         self.source = 'lead0'
-      if any((lead_1_obstacle - get_safe_obstacle_distance(self.x_sol[:,1], self.desired_TF))- self.x_sol[:,0] < 0.0) and \
+      if any((lead_1_obstacle - get_safe_obstacle_distance(self.x_sol[:,1], t_follow))- self.x_sol[:,0] < 0.0) and \
          (lead_1_obstacle[0] - lead_0_obstacle[0]):
         self.source = 'lead1'
 
